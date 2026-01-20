@@ -48,6 +48,7 @@
       font: inherit;
       color: inherit;
     }
+    button:disabled, input:disabled{opacity:.55; cursor:not-allowed}
     .date{
       padding:8px 10px;
       border-radius:12px;
@@ -152,6 +153,18 @@
       border:1px solid rgba(148,163,184,.10);
       border-radius: 16px;
     }
+    .itemRow.sortMode{grid-template-columns: auto 1fr auto; cursor:grab}
+    .itemRow.dragOver{outline:2px dashed rgba(34,197,94,.65)}
+    .dragHandle{
+      width:36px; height:36px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:#fff;
+      display:flex; align-items:center; justify-content:center;
+      color:var(--muted);
+      font-weight:900;
+      user-select:none;
+    }
     .itemName{font-weight:800}
     .itemMeta{font-size:12px; color:var(--muted); margin-top:2px}
 
@@ -214,6 +227,44 @@
     .toast.show{opacity:1}
 
     .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+  
+
+    /* --- modal --- */
+    .modalOverlay{
+      position:fixed; inset:0; z-index:60;
+      background: rgba(17,24,39,.35);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:14px;
+    }
+    .modal{
+      width:min(680px, 100%);
+      background: rgba(255,255,255,.98);
+      border:1px solid rgba(148,163,184,.18);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .modalHeader{padding:12px 14px; border-bottom:1px solid rgba(148,163,184,.14); display:flex; justify-content:space-between; align-items:center; gap:10px}
+    .modalHeader .ttl{font-weight:900}
+    .modalBody{padding:14px}
+    .field{display:grid; gap:6px; margin-bottom:12px}
+    .field label{font-size:12px; color:var(--muted); font-weight:800}
+    .field input[type="text"], .field input[type="number"], .field input[type="time"], .field textarea{
+      width:100%;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(148,163,184,.18);
+      background: rgba(255,255,255,.90);
+      outline:none;
+    }
+    .field textarea{min-height:84px}
+    .daysGrid{display:grid; grid-template-columns: repeat(7, 1fr); gap:8px}
+    .dayBox{display:flex; flex-direction:column; align-items:center; gap:6px; padding:10px 0; border-radius:16px; border:1px solid rgba(148,163,184,.16); background: rgba(249,250,251,.95)}
+    .dayBox input{width:18px; height:18px}
+    .modalFooter{padding:12px 14px; border-top:1px solid rgba(148,163,184,.14); display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap}
+
   </style>
 </head>
 <body>
@@ -221,8 +272,8 @@
     <div class="row" style="justify-content:space-between">
       <div class="row">
         <div class="title">発注アシスト</div>
-        <div class="chip" title="日付ごとに保存されます">
-          <span class="muted">日付</span>
+        <div class="chip" title="納品日ごとに保存されます">
+          <span class="muted">納品日</span>
           <button class="iconBtn" id="prevDayBtn" title="前日">‹</button>
           <input id="date" class="date" type="date" />
           <button class="iconBtn" id="nextDayBtn" title="翌日">›</button>
@@ -266,6 +317,7 @@
           <div class="toolbar">
             <input id="itemSearch" class="search" placeholder="商品検索（例：バター、牛乳…）" />
             <button class="btn small" id="addItemBtn">＋商品追加</button>
+            <button class="btn small" id="sortItemsBtn">並べ替え</button>
           </div>
           <div id="itemList" class="list"></div>
           <div class="muted" style="margin-top:10px; font-size:12px">※ 入力は自動保存（このiPad内）／複数端末で共有したい場合は「同期版」へ拡張できます</div>
@@ -315,6 +367,12 @@
           <button class="btn warn" id="resetMasterBtn">初期マスターに戻す</button>
         </div>
         <div class="hr"></div>
+        <h2 style="margin-top:0">納品・締切</h2>
+        <div class="muted" style="margin:8px 0 12px">業者ごとに「納品曜日」と「発注締切（当日/前日＋時刻）」を保存できます。</div>
+        <div id="vendorScheduleList" class="list" style="margin-bottom:12px"></div>
+        <div class="muted" style="font-size:12px">※「高瀬：祝日NG」など例外は、業者の「除外日」に日付を入れてください。</div>
+
+        <div class="hr"></div>
         <h2 style="margin-top:0">同期版（次の一手）</h2>
         <div class="muted">
           「誰が」「いつ」「どれを発注したか」や、複数iPad/スマホで共有をやりたくなったら、
@@ -324,6 +382,99 @@
       </div>
     </section>
   </main>
+
+
+
+  <!-- Modals -->
+  <div id="itemModal" class="modalOverlay" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modalHeader">
+        <div class="ttl" id="itemModalTitle">商品設定</div>
+        <button class="btn small" id="itemModalClose">閉じる</button>
+      </div>
+      <div class="modalBody">
+        <div class="muted" style="font-size:12px; margin-bottom:10px">適正在庫は商品ごとに保存されます（この端末内）。</div>
+        <div class="field">
+          <label>商品名</label>
+          <input id="itemNameView" type="text" disabled />
+        </div>
+        <div class="field">
+          <label>単位</label>
+          <input id="itemUnitInput" type="text" placeholder="例：kg / 本 / 袋 / ケース" />
+        </div>
+        <div class="field">
+          <label>メモ</label>
+          <input id="itemMemoInput" type="text" placeholder="任意" />
+        </div>
+        <div class="field">
+          <label>適正在庫（数値）</label>
+          <input id="itemIdealInput" type="number" inputmode="numeric" min="0" step="1" placeholder="例：5" />
+        </div>
+        <div class="row" style="justify-content:space-between">
+          <button class="btn danger" id="itemDeleteBtn">この商品を削除</button>
+          <div class="muted" style="font-size:12px">※削除すると過去データの表示からも外れます</div>
+        </div>
+      </div>
+      <div class="modalFooter">
+        <button class="btn" id="itemModalCancel">キャンセル</button>
+        <button class="btn primary" id="itemModalSave">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="vendorModal" class="modalOverlay" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modalHeader">
+        <div class="ttl" id="vendorModalTitle">納品・締切設定</div>
+        <button class="btn small" id="vendorModalClose">閉じる</button>
+      </div>
+      <div class="modalBody">
+        <div class="muted" style="font-size:12px; margin-bottom:10px">納品曜日と発注締切を編集できます（保存されます）。</div>
+
+        <div class="field">
+          <label>業者</label>
+          <input id="vendorNameView" type="text" disabled />
+        </div>
+
+        <div class="field">
+          <label>納品曜日</label>
+          <div class="daysGrid" id="vendorDaysGrid"></div>
+        </div>
+
+        <div class="row" style="gap:12px">
+          <div class="field" style="flex:1; margin:0">
+            <label>締切時刻</label>
+            <input id="vendorCutoffTime" type="time" />
+          </div>
+          <div class="field" style="flex:1; margin:0">
+            <label>締切の基準</label>
+            <div class="row" style="gap:10px; align-items:center; padding:10px 0">
+              <label class="row" style="gap:8px"><input type="radio" name="cutoffOffset" value="0" />当日</label>
+              <label class="row" style="gap:8px"><input type="radio" name="cutoffOffset" value="1" />前日</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>祝日納品なし（メモ）</label>
+          <div class="row" style="gap:10px; align-items:center">
+            <label class="row" style="gap:8px"><input id="vendorNoHolidays" type="checkbox" />祝日NG</label>
+            <span class="muted" style="font-size:12px">※祝日判定はしないので、必要なら下の「除外日」に日付を入れてください</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>除外日（納品しない日）</label>
+          <textarea id="vendorBlockDates" placeholder="例：2026-02-11, 2026-02-23
+カンマ区切り or 改行で入力"></textarea>
+        </div>
+      </div>
+      <div class="modalFooter">
+        <button class="btn" id="vendorModalCancel">キャンセル</button>
+        <button class="btn primary" id="vendorModalSave">保存</button>
+      </div>
+    </div>
+  </div>
 
   <div id="toast" class="toast">OK</div>
 
@@ -405,13 +556,116 @@ const DEFAULT_VENDOR_CHANNEL = {
   'トキノ屋': 'line',
 };
 
+// ---------- delivery / cutoff defaults (editable) ----------
+// deliveryDays: 0=日 ... 6=土
+const ALL_DAYS = [0,1,2,3,4,5,6];
+const DOW_LABELS = ['日','月','火','水','木','金','土'];
+
+// schedule is stored per-vendor as vendor.schedule in master
+const DEFAULT_VENDOR_SCHEDULE = {
+  '大光':    { deliveryDays:[1,2,3,4,5], cutoffTime:'14:30', cutoffOffsetDays:1, noHolidays:false, blockDates:[] },
+  '高瀬':    { deliveryDays:[1,2,3,4,5], cutoffTime:'03:00', cutoffOffsetDays:0, noHolidays:true,  blockDates:[] },
+  'マルト':  { deliveryDays:ALL_DAYS,    cutoffTime:'03:00', cutoffOffsetDays:0, noHolidays:false, blockDates:[] },
+  'めいらく': {deliveryDays:[1,3,5],     cutoffTime:'16:00', cutoffOffsetDays:1, noHolidays:false, blockDates:[] },
+  'TOHO':    { deliveryDays:[2,5],       cutoffTime:'03:00', cutoffOffsetDays:0, noHolidays:false, blockDates:[] },
+  'toho':    { deliveryDays:[2,5],       cutoffTime:'03:00', cutoffOffsetDays:0, noHolidays:false, blockDates:[] },
+  '安田青果': {deliveryDays:ALL_DAYS,    cutoffTime:'03:00', cutoffOffsetDays:0, noHolidays:false, blockDates:[] },
+  'トキノ屋': {deliveryDays:ALL_DAYS,    cutoffTime:'03:00', cutoffOffsetDays:0, noHolidays:false, blockDates:[] },
+};
+
+function getVendorObj(name){
+  return master?.vendors?.find(x => x.name === name) || null;
+}
+
 function vendorChannel(name){
-  const v = master?.vendors?.find(x => x.name === name);
+  const v = getVendorObj(name);
   return (v && v.channel) ? v.channel : (DEFAULT_VENDOR_CHANNEL[name] || 'web');
 }
 
 function channelLabel(ch){
   return ch === 'infomart' ? 'Infomart' : ch === 'line' ? 'LINE' : 'WEB';
+}
+
+function normalizeDays(arr, fallback){
+  const base = Array.isArray(arr) ? arr : (fallback || []);
+  const s = new Set(base.map(n => Number(n)).filter(n => Number.isFinite(n) && n>=0 && n<=6));
+  const out = Array.from(s).sort((a,b)=>a-b);
+  return out.length ? out : (fallback || [1,2,3,4,5]);
+}
+
+function normalizeBlockDates(arr){
+  const out = [];
+  for(const x of (Array.isArray(arr) ? arr : [])){
+    const s = String(x).slice(0,10);
+    if(/^\d{4}-\d{2}-\d{2}$/.test(s)) out.push(s);
+  }
+  return Array.from(new Set(out)).sort();
+}
+
+function scheduleForVendor(name){
+  const v = getVendorObj(name);
+  const base = DEFAULT_VENDOR_SCHEDULE[name] || { deliveryDays:[1,2,3,4,5], cutoffTime:'03:00', cutoffOffsetDays:0, noHolidays:false, blockDates:[] };
+  const sch = (v && v.schedule) ? v.schedule : base;
+  const days = normalizeDays(sch.deliveryDays, base.deliveryDays);
+  const blockDates = normalizeBlockDates(sch.blockDates || base.blockDates);
+  const cutoffTime = String(sch.cutoffTime || base.cutoffTime || '03:00');
+  const cutoffOffsetDays = Number(sch.cutoffOffsetDays);
+  return {
+    deliveryDays: days,
+    cutoffTime,
+    cutoffOffsetDays: (cutoffOffsetDays === 1 ? 1 : 0),
+    noHolidays: !!(sch.noHolidays ?? base.noHolidays),
+    blockDates,
+  };
+}
+
+function daysSummary(days){
+  const s = normalizeDays(days, days);
+  if(s.length === 7) return '毎日';
+  const key = s.join(',');
+  if(key === '1,2,3,4,5') return '月〜金';
+  if(key === '1,2,3,4,5,6') return '月〜土';
+  if(key === '0,6') return '土日';
+  // consecutive range (e.g., 火〜金)
+  let consec = true;
+  for(let i=0;i<s.length-1;i++){
+    if(s[i+1] !== s[i] + 1){ consec = false; break; }
+  }
+  if(consec && s.length >= 3) return `${DOW_LABELS[s[0]]}〜${DOW_LABELS[s[s.length-1]]}`;
+  return s.map(d => DOW_LABELS[d]).join('・');
+}
+
+function cutoffLabel(name){
+  const sch = scheduleForVendor(name);
+  const when = sch.cutoffOffsetDays === 1 ? '前日' : '当日';
+  return `${when}${sch.cutoffTime}`;
+}
+
+function weekdayOf(dateStr){
+  const [y,m,d] = String(dateStr).split('-').map(n => parseInt(n,10));
+  const dt = new Date(y, (m||1)-1, d||1);
+  return dt.getDay();
+}
+
+function isDeliveryDay(name, dateStr){
+  const sch = scheduleForVendor(name);
+  if(sch.blockDates.includes(dateStr)) return false;
+  const dow = weekdayOf(dateStr);
+  return sch.deliveryDays.includes(dow);
+}
+
+function nextDeliveryDate(name, fromDateStr){
+  for(let i=0;i<30;i++){
+    const d = addDays(fromDateStr, i);
+    if(isDeliveryDay(name, d)) return d;
+  }
+  return fromDateStr;
+}
+
+function cutoffDateTimeForDelivery(name, deliveryDateStr){
+  const sch = scheduleForVendor(name);
+  const deadlineDate = addDays(deliveryDateStr, sch.cutoffOffsetDays === 1 ? -1 : 0);
+  return { date: deadlineDate, time: sch.cutoffTime, when: (sch.cutoffOffsetDays===1?'前日':'当日') };
 }
 
 // ---------- storage keys ----------
@@ -449,6 +703,7 @@ function channelLabel(ch){
 
   // ---------- app state ----------
   let master = null;
+  let sortMode = false; // 商品並べ替えモード
   let orders = getOrders();
   let currentVendor = null;
   let currentDate = localISODate();
@@ -467,13 +722,35 @@ function channelLabel(ch){
       items: (v.items || []).map(it => ({
         name: String(it.name || '').trim(),
         unit: String(it.unit || ''),
-        memo: String(it.memo || '')
-      })).filter(it => it.name)
+        memo: String(it.memo || ''),
+        idealStock: (it.idealStock==null? '' : String(it.idealStock))
+      })).filter(it => it.name),
+      schedule: v.schedule || DEFAULT_VENDOR_SCHEDULE[String(v.name||'').trim()] || {deliveryDays:[1,2,3,4,5], cutoffTime:'03:00', cutoffOffsetDays:0, noHolidays:false, blockDates:[]}
     })).filter(v => v.name);
 
     master = seed;
     setMaster(master);
   }
+
+  function migrateMaster(){
+    let changed = false;
+    if(!master || !Array.isArray(master.vendors)) return false;
+    for(const v of master.vendors){
+      if(!v.schedule){
+        v.schedule = DEFAULT_VENDOR_SCHEDULE[String(v.name||'').trim()] || { deliveryDays:[1,2,3,4,5], cutoffTime:'03:00', cutoffOffsetDays:0, noHolidays:false, blockDates:[] };
+        changed = true;
+      }
+      if(!Array.isArray(v.items)) v.items = [];
+      for(const it of v.items){
+        if(it.idealStock === undefined){ it.idealStock = ''; changed = true; }
+        if(it.unit === undefined) it.unit = '';
+        if(it.memo === undefined) it.memo = '';
+      }
+    }
+    if(changed) setMaster(master);
+    return changed;
+  }
+
 
   function ensureDay(date){
     if(!orders[date]) orders[date] = {};
@@ -519,7 +796,7 @@ function channelLabel(ch){
       el.innerHTML = `
         <div>
           <div class="name">${escapeHtml(v.name)}</div>
-          <div class="muted" style="font-size:12px">${channelLabel(v.channel || vendorChannel(v.name))} ・ 商品 ${v.items.length} 件</div>
+          <div class="muted" style="font-size:12px">${channelLabel(v.channel || vendorChannel(v.name))} ・ 納品:${escapeHtml(daysSummary(scheduleForVendor(v.name).deliveryDays))} ・ 締切:${escapeHtml(cutoffLabel(v.name))} ・ 商品 ${v.items.length} 件</div>
         </div>
         <div class="row" style="gap:8px">
           <span class="badge">${channelLabel(vendorChannel(v.name))}</span>
@@ -528,6 +805,7 @@ function channelLabel(ch){
         </div>
       `;
       el.addEventListener('click', () => {
+        if(sortMode) setSortMode(false);
         currentVendor = v.name;
         $('#vendorTitle').textContent = `商品：${v.name}`;
         $('#itemSearch').value = '';
@@ -553,6 +831,77 @@ function channelLabel(ch){
       return;
     }
 
+    // 並べ替えモード：検索/数量入力を一旦止めて、順番だけを操作
+    if(sortMode){
+      if(v.items.length === 0){
+        list.innerHTML = `<div class="muted">商品がありません。まずは商品追加してください。</div>`;
+        return;
+      }
+      v.items.forEach((it, idx) => {
+        const row = document.createElement('div');
+        row.className = 'itemRow sortMode';
+        row.draggable = true;
+        row.innerHTML = `
+          <div class="dragHandle" title="ドラッグで移動">≡</div>
+          <div>
+            <div class="itemName">${escapeHtml(it.name)}</div>
+            <div class="itemMeta">
+              ${it.unit ? `<span class="pill">単位：${escapeHtml(it.unit)}</span>` : `<span class="pill">単位：未設定</span>`}
+              ${it.memo ? `<span class="pill">メモ：${escapeHtml(it.memo)}</span>` : ``}
+              ${(it.idealStock!=null && String(it.idealStock).trim()!=='' ) ? `<span class="pill">適正：${escapeHtml(it.idealStock)}</span>` : ``}
+            </div>
+          </div>
+          <div class="row" style="gap:6px">
+            <button class="btn small" data-move="up" title="上へ">↑</button>
+            <button class="btn small" data-move="down" title="下へ">↓</button>
+          </div>
+        `;
+
+        // up/down
+        row.querySelectorAll('button[data-move]').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const dir = btn.getAttribute('data-move');
+            const to = dir === 'up' ? idx - 1 : idx + 1;
+            if(to < 0 || to >= v.items.length) return;
+            const moved = v.items.splice(idx, 1)[0];
+            v.items.splice(to, 0, moved);
+            setMaster(master);
+            renderItems();
+            renderVendors();
+          });
+        });
+
+        // drag & drop
+        row.addEventListener('dragstart', (e) => {
+          try{
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', String(idx));
+          }catch(_){ }
+        });
+        row.addEventListener('dragover', (e) => { e.preventDefault(); row.classList.add('dragOver'); });
+        row.addEventListener('dragleave', () => row.classList.remove('dragOver'));
+        row.addEventListener('drop', (e) => {
+          e.preventDefault();
+          row.classList.remove('dragOver');
+          const from = Number(e.dataTransfer?.getData('text/plain'));
+          const to = idx;
+          if(!Number.isFinite(from) || from < 0 || from >= v.items.length) return;
+          if(from === to) return;
+          const moved = v.items.splice(from, 1)[0];
+          v.items.splice(to, 0, moved);
+          setMaster(master);
+          renderItems();
+          renderVendors();
+        });
+
+        list.appendChild(row);
+      });
+
+      list.insertAdjacentHTML('beforeend', `<div class="muted" style="font-size:12px">※ ドラッグ、または ↑↓ で並べ替えできます（完了を押すと通常表示に戻ります）</div>`);
+      return;
+    }
+
     const q = ($('#itemSearch').value || '').trim().toLowerCase();
     const items = v.items.filter(it => !q || it.name.toLowerCase().includes(q) || (it.memo||'').toLowerCase().includes(q));
 
@@ -571,9 +920,11 @@ function channelLabel(ch){
           <div class="itemMeta">
             ${it.unit ? `<span class="pill">単位：${escapeHtml(it.unit)}</span>` : `<span class="pill">単位：未設定</span>`}
             ${it.memo ? `<span class="pill">メモ：${escapeHtml(it.memo)}</span>` : ``}
+            ${it.idealStock!=='' && it.idealStock!=null && String(it.idealStock).trim()!=='' ? `<span class="pill">適正：${escapeHtml(it.idealStock)}</span>` : `<span class="pill">適正：未設定</span>`}
           </div>
         </div>
         <div class="qtyBox">
+          <button class="btn small" data-act="editItem" title="商品設定">⚙</button>
           <button class="qtyBtn" data-delta="-1">−</button>
           <input class="qtyInput" inputmode="numeric" pattern="[0-9]*" value="${qty}" />
           <button class="qtyBtn" data-delta="+1">＋</button>
@@ -608,6 +959,14 @@ function channelLabel(ch){
 
       // long press to zero? (optional)
       input.addEventListener('dblclick', () => commit(0));
+
+      const editBtn = row.querySelector('[data-act="editItem"]');
+      if(editBtn){
+        editBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openItemModal(v.name, it.name);
+        });
+      }
 
       list.appendChild(row);
     }
@@ -733,6 +1092,15 @@ function channelLabel(ch){
       const txt = buildTextForVendor(currentDate, v.name);
       any = true;
 
+      const sch = scheduleForVendor(v.name);
+      const deliveryOk = isDeliveryDay(v.name, currentDate);
+      const delDate = deliveryOk ? currentDate : nextDeliveryDate(v.name, currentDate);
+      const dl = cutoffDateTimeForDelivery(v.name, delDate);
+      const delDow = DOW_LABELS[weekdayOf(delDate)];
+      const delLabel = deliveryOk ? `納品：${fmtMD(delDate)}（${delDow}）` : `この日は納品なし → 次回：${fmtMD(delDate)}（${delDow}）`;
+      const deadlineLabel = `締切：${fmtMD(dl.date)} ${dl.time}（${dl.when}）`;
+      const scheduleLine = `${delLabel} ・ ${deadlineLabel}${sch.noHolidays ? ' ・ 祝日NG' : ''}`;
+
       const card = document.createElement('div');
       card.className = 'card';
       card.style.background = 'rgba(249,250,251,.95)';
@@ -740,7 +1108,10 @@ function channelLabel(ch){
       card.style.boxShadow = 'none';
       card.innerHTML = `
         <div class="split">
-          <div style="font-weight:900">${escapeHtml(v.name)} <span class="badge" style="margin-left:6px">${channelLabel(vendorChannel(v.name))}</span></div>
+          <div>
+            <div style="font-weight:900">${escapeHtml(v.name)} <span class="badge" style="margin-left:6px">${channelLabel(vendorChannel(v.name))}</span></div>
+            <div class="muted" style="font-size:12px">${escapeHtml(scheduleLine)}</div>
+          </div>
           <div class="row">
             <button class="btn small" data-act="copy">コピー</button>
             <button class="btn small" data-act="txt">TXT保存</button>
@@ -813,7 +1184,197 @@ function channelLabel(ch){
     return String(s ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
   }
 
-  // ---------- actions ----------
+  // ---------- modals (item / vendor schedule) ----------
+  let editingItem = null; // {vendorName, itemName}
+  let editingVendorName = null;
+
+  function showModal(el){ el.style.display = 'flex'; }
+  function hideModal(el){ el.style.display = 'none'; }
+
+  // Item modal
+  const itemModal = $('#itemModal');
+  const itemModalTitle = $('#itemModalTitle');
+  const itemNameView = $('#itemNameView');
+  const itemUnitInput = $('#itemUnitInput');
+  const itemMemoInput = $('#itemMemoInput');
+  const itemIdealInput = $('#itemIdealInput');
+
+  function openItemModal(vendorName, itemName){
+    const v = master.vendors.find(x => x.name === vendorName);
+    const it = v?.items?.find(x => x.name === itemName);
+    if(!v || !it){ toast('商品が見つかりません'); return; }
+    editingItem = {vendorName, itemName};
+    itemModalTitle.textContent = `商品設定：${vendorName}`;
+    itemNameView.value = it.name;
+    itemUnitInput.value = it.unit || '';
+    itemMemoInput.value = it.memo || '';
+    itemIdealInput.value = (it.idealStock==null? '' : String(it.idealStock));
+    showModal(itemModal);
+  }
+  function closeItemModal(){ editingItem = null; hideModal(itemModal); }
+
+  function saveItemModal(){
+    if(!editingItem) return;
+    const v = master.vendors.find(x => x.name === editingItem.vendorName);
+    const it = v?.items?.find(x => x.name === editingItem.itemName);
+    if(!v || !it){ toast('保存できません'); return; }
+    it.unit = String(itemUnitInput.value || '').trim();
+    it.memo = String(itemMemoInput.value || '').trim();
+    const raw = String(itemIdealInput.value || '').trim();
+    if(raw === '') it.idealStock = '';
+    else{
+      const n = Math.max(0, Math.min(999999, Math.round(Number(raw))));
+      it.idealStock = Number.isFinite(n) ? String(n) : '';
+    }
+    // update existing order entries' unit/memo for consistency
+    for(const d of Object.keys(orders)){
+      const e = orders[d]?.[v.name]?.[it.name];
+      if(e){ e.unit = it.unit || ''; e.memo = it.memo || ''; }
+    }
+    setMaster(master);
+    scheduleSave();
+    renderVendors();
+    renderItems();
+    renderTodaySummary(false);
+    toast('保存しました');
+    closeItemModal();
+  }
+
+  function deleteItem(){
+    if(!editingItem) return;
+    const ok = confirm('この商品を削除します。よろしいですか？');
+    if(!ok) return;
+    const v = master.vendors.find(x => x.name === editingItem.vendorName);
+    if(!v) return;
+    v.items = (v.items || []).filter(x => x.name !== editingItem.itemName);
+    // remove from orders
+    for(const d of Object.keys(orders)){
+      if(orders[d]?.[v.name]?.[editingItem.itemName]){
+        delete orders[d][v.name][editingItem.itemName];
+      }
+    }
+    setMaster(master);
+    setOrders(orders);
+    renderVendors();
+    renderItems();
+    renderTodaySummary(false);
+    renderHistory();
+    toast('削除しました');
+    closeItemModal();
+  }
+
+  $('#itemModalClose').addEventListener('click', closeItemModal);
+  $('#itemModalCancel').addEventListener('click', closeItemModal);
+  $('#itemModalSave').addEventListener('click', saveItemModal);
+  $('#itemDeleteBtn').addEventListener('click', deleteItem);
+  itemModal.addEventListener('click', (e) => { if(e.target === itemModal) closeItemModal(); });
+
+  // Vendor schedule modal
+  const vendorModal = $('#vendorModal');
+  const vendorNameView = $('#vendorNameView');
+  const vendorDaysGrid = $('#vendorDaysGrid');
+  const vendorCutoffTime = $('#vendorCutoffTime');
+  const vendorNoHolidays = $('#vendorNoHolidays');
+  const vendorBlockDates = $('#vendorBlockDates');
+
+  function buildDaysGrid(selectedDays){
+    vendorDaysGrid.innerHTML = '';
+    for(let i=0;i<7;i++){
+      const box = document.createElement('label');
+      box.className = 'dayBox';
+      box.innerHTML = `<div style="font-weight:900">${DOW_LABELS[i]}</div><input type="checkbox" value="${i}" ${selectedDays.includes(i)?'checked':''} />`;
+      vendorDaysGrid.appendChild(box);
+    }
+  }
+
+  function parseBlockDates(text){
+    const parts = String(text||'').split(/[\s,]+/).map(s=>s.trim()).filter(Boolean);
+    const out = [];
+    for(const s of parts){
+      const t = s.slice(0,10);
+      if(/^\d{4}-\d{2}-\d{2}$/.test(t)) out.push(t);
+    }
+    return Array.from(new Set(out)).sort();
+  }
+
+  function openVendorModal(vendorName){
+    const v = getVendorObj(vendorName);
+    if(!v){ toast('業者が見つかりません'); return; }
+    editingVendorName = vendorName;
+    vendorNameView.value = vendorName;
+    const sch = scheduleForVendor(vendorName);
+    buildDaysGrid(sch.deliveryDays);
+    vendorCutoffTime.value = sch.cutoffTime || '03:00';
+    $$("input[name='cutoffOffset']").forEach(r => r.checked = (Number(r.value) === sch.cutoffOffsetDays));
+    vendorNoHolidays.checked = !!sch.noHolidays;
+    vendorBlockDates.value = (sch.blockDates || []).join(', ');
+    showModal(vendorModal);
+  }
+
+  function closeVendorModal(){ editingVendorName = null; hideModal(vendorModal); }
+
+  function saveVendorModal(){
+    if(!editingVendorName) return;
+    const v = getVendorObj(editingVendorName);
+    if(!v){ toast('保存できません'); return; }
+    const days = Array.from(vendorDaysGrid.querySelectorAll('input[type=checkbox]'))
+      .filter(cb => cb.checked)
+      .map(cb => Number(cb.value))
+      .filter(n => Number.isFinite(n) && n>=0 && n<=6);
+    const cutoffOffsetDays = Number($$("input[name='cutoffOffset']").find(r=>r.checked)?.value || 0);
+    const cutoffTime = String(vendorCutoffTime.value || '03:00');
+    const noHolidays = !!vendorNoHolidays.checked;
+    const blockDates = parseBlockDates(vendorBlockDates.value);
+
+    v.schedule = {
+      deliveryDays: normalizeDays(days, scheduleForVendor(editingVendorName).deliveryDays),
+      cutoffTime,
+      cutoffOffsetDays: (cutoffOffsetDays===1?1:0),
+      noHolidays,
+      blockDates,
+    };
+
+    setMaster(master);
+    renderVendors();
+    renderTodaySummary(false);
+    renderVendorScheduleList();
+    toast('保存しました');
+    closeVendorModal();
+  }
+
+  $('#vendorModalClose').addEventListener('click', closeVendorModal);
+  $('#vendorModalCancel').addEventListener('click', closeVendorModal);
+  $('#vendorModalSave').addEventListener('click', saveVendorModal);
+  vendorModal.addEventListener('click', (e) => { if(e.target === vendorModal) closeVendorModal(); });
+
+  function renderVendorScheduleList(){
+    const list = $('#vendorScheduleList');
+    if(!list) return;
+    list.innerHTML = '';
+    master.vendors.forEach(v => {
+      const sch = scheduleForVendor(v.name);
+      const el = document.createElement('div');
+      el.className = 'vendorItem';
+      el.innerHTML = `
+        <div>
+          <div class="name">${escapeHtml(v.name)}</div>
+          <div class="muted" style="font-size:12px">納品：${escapeHtml(daysSummary(sch.deliveryDays))} ・ 締切：${escapeHtml(cutoffLabel(v.name))}${sch.noHolidays?' ・ 祝日NG':''}</div>
+        </div>
+        <div class="row" style="gap:8px">
+          <span class="badge">編集</span>
+          <span class="badge">→</span>
+        </div>
+      `;
+      el.addEventListener('click', () => openVendorModal(v.name));
+      list.appendChild(el);
+    });
+    if(master.vendors.length===0) list.innerHTML = `<div class="muted">業者がありません</div>`;
+  }
+
+  function renderSettings(){
+    renderVendorScheduleList();
+  }
+// ---------- actions ----------
   function onDateChange(d){
     currentDate = d;
     ensureDay(currentDate);
@@ -824,12 +1385,28 @@ function channelLabel(ch){
     renderHistory();
   }
 
+  function setSortMode(on){
+    sortMode = !!on;
+    const btn = $('#sortItemsBtn');
+    if(btn) btn.textContent = sortMode ? '並べ替え完了' : '並べ替え';
+    const search = $('#itemSearch');
+    const add = $('#addItemBtn');
+    if(search){
+      search.disabled = sortMode;
+      if(sortMode) search.value = '';
+    }
+    if(add) add.disabled = sortMode;
+    if(sortMode) toast('並べ替え：ドラッグ or ↑↓');
+  }
+
   function setTab(name){
     $$('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
     $$('.view').forEach(v => v.style.display = 'none');
     $('#view-' + name).style.display = 'block';
+    if(name !== 'vendors' && sortMode) setSortMode(false);
     if(name==='today') renderTodaySummary();
     if(name==='history') renderHistory();
+    if(name==='settings') renderSettings();
   }
 
   // ---------- PWA install ----------
@@ -852,6 +1429,7 @@ function channelLabel(ch){
   // ---------- boot ----------
   async function boot(){
     await initMaster();
+    migrateMaster();
 
     // date
     $('#date').value = currentDate;
@@ -928,12 +1506,17 @@ function channelLabel(ch){
       const exists = v.items.some(it => it.name === name.trim());
       if(exists){ toast('同名の商品があります'); return; }
       v.items.push({name:name.trim(), unit:unit.trim(), memo:memo.trim()});
-      // keep sorted (jp-ish)
-      v.items.sort((a,b)=> a.name.localeCompare(b.name,'ja'));
       setMaster(master);
       renderVendors();
       renderItems();
       toast('商品を追加しました');
+    });
+
+    // sort mode (reorder)
+    $('#sortItemsBtn').addEventListener('click', () => {
+      if(!currentVendor){ toast('業者を選んでください'); return; }
+      setSortMode(!sortMode);
+      renderItems();
     });
 
     // wipe all
@@ -964,6 +1547,7 @@ function channelLabel(ch){
         const m = JSON.parse(text);
         if(!m?.vendors) throw new Error('format');
         master = m;
+        migrateMaster();
         setMaster(master);
         renderVendors();
         renderItems();
@@ -981,6 +1565,7 @@ function channelLabel(ch){
       if(!ok) return;
       localStorage.removeItem(KEY_MASTER);
       await initMaster();
+    migrateMaster();
       renderVendors();
       renderItems();
       renderTodaySummary(false);
