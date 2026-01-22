@@ -44,10 +44,7 @@
       border-radius:999px;
       display:flex; gap:8px; align-items:center;
     }
-    input, button, textarea, select{
-      font: inherit;
-      color: inherit;
-    }
+    input, button, textarea, select{font: inherit; color: inherit;}
     button:disabled, input:disabled{opacity:.55; cursor:not-allowed}
     .date{
       padding:8px 10px;
@@ -69,7 +66,6 @@
       user-select:none;
     }
     .iconBtn:active{transform: translateY(1px)}
-
     .tabs{
       display:grid; grid-template-columns: repeat(4, 1fr);
       gap:8px; margin-top:10px;
@@ -86,13 +82,10 @@
       color: var(--muted);
     }
     .tab.active{background: rgba(34,197,94,.14); border-color: rgba(34,197,94,.35); color: var(--text)}
-
     main{padding:14px; max-width:1050px; margin:0 auto}
-
     .grid{display:grid; gap:12px}
     .grid.cols2{grid-template-columns: 1fr}
     @media (min-width: 860px){.grid.cols2{grid-template-columns: 360px 1fr}}
-
     .card{
       background: rgba(255,255,255,.95);
       border:1px solid rgba(148,163,184,.12);
@@ -102,7 +95,6 @@
     }
     .card h2{margin:0 0 8px; font-size:16px}
     .muted{color:var(--muted)}
-
     .btn{
       border:1px solid rgba(148,163,184,.18);
       background: rgba(255,255,255,.85);
@@ -117,7 +109,6 @@
     .btn.danger{background: rgba(239,68,68,.14); border-color: rgba(239,68,68,.35)}
     .btn.warn{background: rgba(245,158,11,.14); border-color: rgba(245,158,11,.35)}
     .btn.small{padding:8px 10px; border-radius:12px; font-weight:700}
-
     .list{display:flex; flex-direction:column; gap:10px}
     .vendorItem{
       display:flex; justify-content:space-between; align-items:center;
@@ -131,7 +122,6 @@
     .vendorItem .name{font-weight:800}
     .badge{font-size:12px; padding:5px 8px; border-radius:999px; border:1px solid rgba(148,163,184,.18); color:var(--muted)}
     .badge.ok{border-color: rgba(34,197,94,.35); color: rgba(167,243,208,.95)}
-
     .toolbar{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:8px 0 12px}
     .search{
       flex:1;
@@ -142,7 +132,6 @@
       background: rgba(255,255,255,.85);
       outline:none;
     }
-
     .itemRow{
       display:grid;
       grid-template-columns: 1fr auto;
@@ -167,7 +156,6 @@
     }
     .itemName{font-weight:800}
     .itemMeta{font-size:12px; color:var(--muted); margin-top:2px}
-
     .qtyBox{display:flex; align-items:center; gap:8px}
     .qtyBtn{
       width:40px; height:40px;
@@ -197,10 +185,8 @@
       color:var(--muted);
       white-space:nowrap;
     }
-
     .split{display:flex; justify-content:space-between; gap:10px; align-items:center; flex-wrap:wrap}
     .hr{height:1px; background: rgba(148,163,184,.12); margin:12px 0}
-
     textarea{
       width:100%; min-height:140px;
       border-radius: 16px;
@@ -210,7 +196,6 @@
       outline:none;
       color: var(--text);
     }
-
     .toast{
       position:fixed; left:50%; transform:translateX(-50%);
       bottom:18px;
@@ -225,9 +210,7 @@
       z-index:50;
     }
     .toast.show{opacity:1}
-
     .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
-  
 
     /* --- modal --- */
     .modalOverlay{
@@ -264,7 +247,6 @@
     .dayBox{display:flex; flex-direction:column; align-items:center; gap:6px; padding:10px 0; border-radius:16px; border:1px solid rgba(148,163,184,.16); background: rgba(249,250,251,.95)}
     .dayBox input{width:18px; height:18px}
     .modalFooter{padding:12px 14px; border-top:1px solid rgba(148,163,184,.14); display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap}
-
   </style>
 </head>
 <body>
@@ -274,10 +256,10 @@
         <div class="title">発注アシスト</div>
         <div class="chip" title="納品日ごとに保存されます">
           <span class="muted">納品日</span>
-          <button class="iconBtn" id="prevDayBtn" title="前日">‹</button>
+          <button class="iconBtn" id="prevDayBtn" title="前日" type="button">‹</button>
           <input id="date" class="date" type="date" />
-          <button class="iconBtn" id="nextDayBtn" title="翌日">›</button>
-          <button class="btn small" id="todayBtn" title="今日に戻す">今日</button>
+          <button class="iconBtn" id="nextDayBtn" title="翌日" type="button">›</button>
+          <button class="btn small" id="todayBtn" title="今日に戻す" type="button">今日</button>
         </div>
         <div class="chip" title="入力すると自動で保存されます">
           <span class="muted">保存</span>
@@ -285,7 +267,7 @@
         </div>
       </div>
       <div class="row">
-        <button class="btn small" id="installBtn" style="display:none">ホーム画面に追加</button>
+        <button class="btn small" id="installBtn" style="display:none" type="button">ホーム画面に追加</button>
       </div>
     </div>
 
@@ -310,14 +292,14 @@
           <div class="split">
             <h2 id="vendorTitle">商品</h2>
             <div class="row">
-              <button class="btn small" id="clearVendorBtn">この業者を0に</button>
-              <button class="btn small primary" id="toTodayBtn">今日の発注へ</button>
+              <button class="btn small" id="clearVendorBtn" type="button">この業者を0に</button>
+              <button class="btn small primary" id="toTodayBtn" type="button">今日の発注へ</button>
             </div>
           </div>
           <div class="toolbar">
             <input id="itemSearch" class="search" placeholder="商品検索（例：バター、牛乳…）" />
-            <button class="btn small" id="addItemBtn">＋商品追加</button>
-            <button class="btn small" id="sortItemsBtn">並べ替え</button>
+            <button class="btn small" id="addItemBtn" type="button">＋商品追加</button>
+            <button class="btn small" id="sortItemsBtn" type="button">並べ替え</button>
           </div>
           <div id="itemList" class="list"></div>
           <div class="muted" style="margin-top:10px; font-size:12px">※ 入力は自動保存（このiPad内）／複数端末で共有したい場合は「同期版」へ拡張できます</div>
@@ -330,9 +312,9 @@
         <div class="split">
           <h2>今日の発注</h2>
           <div class="row">
-            <button class="btn small" id="copyAllBtn">全部コピー</button>
-            <button class="btn small" id="csvAllBtn">CSV出力</button>
-            <button class="btn small danger" id="clearDayBtn">今日を全部0に</button>
+            <button class="btn small" id="copyAllBtn" type="button">全部コピー</button>
+            <button class="btn small" id="csvAllBtn" type="button">CSV出力</button>
+            <button class="btn small danger" id="clearDayBtn" type="button">今日を全部0に</button>
           </div>
         </div>
         <div class="hr"></div>
@@ -344,7 +326,7 @@
       <div class="card">
         <div class="split">
           <h2>履歴</h2>
-          <button class="btn small danger" id="wipeAllBtn">全データ削除</button>
+          <button class="btn small danger" id="wipeAllBtn" type="button">全データ削除</button>
         </div>
         <div class="muted" style="margin:8px 0 12px">日付をタップすると読み込みます。</div>
         <div id="historyList" class="list"></div>
@@ -359,21 +341,26 @@
           追加した商品も含めて「書き出し」できます。
         </div>
         <div class="row" style="gap:12px; margin-bottom:12px">
-          <button class="btn" id="exportMasterBtn">マスターを書き出し（JSON）</button>
+          <button class="btn" id="exportMasterBtn" type="button">マスターを書き出し（JSON）</button>
           <label class="btn" style="cursor:pointer">
             マスターを読み込み（JSON）
             <input type="file" id="importMaster" accept="application/json" style="display:none" />
           </label>
-          <button class="btn warn" id="resetMasterBtn">初期マスターに戻す</button>
+          <button class="btn warn" id="resetMasterBtn" type="button">初期マスターに戻す</button>
         </div>
+
         <div class="hr"></div>
+
         <h2 style="margin-top:0">納品・締切</h2>
         <div class="muted" style="margin:8px 0 12px">業者ごとに「納品曜日」と「発注締切（当日/前日＋時刻）」を保存できます。</div>
         <div id="vendorScheduleList" class="list" style="margin-bottom:12px"></div>
         <div class="muted" style="font-size:12px">※「高瀬：祝日NG」など例外は、業者の「除外日」に日付を入れてください。</div>
+
         <div class="hr"></div>
+
         <h2 style="margin-top:0">クラウド同期（Googleスプレッドシート）</h2>
         <div class="muted" style="margin:8px 0 12px">複数iPadで「同じ数量」を共有します。Googleスプレッドシートに保存／読み込みします。</div>
+
         <div class="field">
           <label><input type="checkbox" id="cloudEnable" /> クラウド同期を有効化</label>
         </div>
@@ -389,29 +376,28 @@
           <label>APIキー（任意・推奨）</label>
           <input id="cloudKey" type="text" placeholder="例：任意の合言葉" />
         </div>
+
         <div class="row" style="gap:10px; align-items:center; margin-top:8px">
           <label class="btn" style="display:flex; gap:8px; align-items:center">
             <input type="checkbox" id="cloudAuto" style="transform:scale(1.1)" />
             自動でクラウドへ保存
           </label>
-          <button class="btn" id="cloudPullBtn">クラウドから読み込み</button>
-          <button class="btn primary" id="cloudPushBtn">クラウドへ保存</button>
+          <button class="btn" id="cloudPullBtn" type="button">クラウドから読み込み</button>
+          <button class="btn primary" id="cloudPushBtn" type="button">クラウドへ保存</button>
           <span class="pill" id="cloudStatus">未設定</span>
         </div>
-        <div class="muted" style="font-size:12px; margin-top:6px">※同期は「その日付の発注」を丸ごと保存／読み込みします（最後に保存した端末が優先）。</div>
 
+        <div class="muted" style="font-size:12px; margin-top:6px">※同期は「その日付の発注」を丸ごと保存／読み込みします（最後に保存した端末が優先）。</div>
       </div>
     </section>
   </main>
-
-
 
   <!-- Modals -->
   <div id="itemModal" class="modalOverlay" role="dialog" aria-modal="true">
     <div class="modal">
       <div class="modalHeader">
         <div class="ttl" id="itemModalTitle">商品設定</div>
-        <button class="btn small" id="itemModalClose">閉じる</button>
+        <button class="btn small" id="itemModalClose" type="button">閉じる</button>
       </div>
       <div class="modalBody">
         <div class="muted" style="font-size:12px; margin-bottom:10px">適正在庫は商品ごとに保存されます（この端末内）。</div>
@@ -432,13 +418,13 @@
           <input id="itemIdealInput" type="number" inputmode="numeric" min="0" step="1" placeholder="例：5" />
         </div>
         <div class="row" style="justify-content:space-between">
-          <button class="btn danger" id="itemDeleteBtn">この商品を削除</button>
+          <button class="btn danger" id="itemDeleteBtn" type="button">この商品を削除</button>
           <div class="muted" style="font-size:12px">※削除すると過去データの表示からも外れます</div>
         </div>
       </div>
       <div class="modalFooter">
-        <button class="btn" id="itemModalCancel">キャンセル</button>
-        <button class="btn primary" id="itemModalSave">保存</button>
+        <button class="btn" id="itemModalCancel" type="button">キャンセル</button>
+        <button class="btn primary" id="itemModalSave" type="button">保存</button>
       </div>
     </div>
   </div>
@@ -447,7 +433,7 @@
     <div class="modal">
       <div class="modalHeader">
         <div class="ttl" id="vendorModalTitle">納品・締切設定</div>
-        <button class="btn small" id="vendorModalClose">閉じる</button>
+        <button class="btn small" id="vendorModalClose" type="button">閉じる</button>
       </div>
       <div class="modalBody">
         <div class="muted" style="font-size:12px; margin-bottom:10px">納品曜日と発注締切を編集できます（保存されます）。</div>
@@ -491,8 +477,8 @@
         </div>
       </div>
       <div class="modalFooter">
-        <button class="btn" id="vendorModalCancel">キャンセル</button>
-        <button class="btn primary" id="vendorModalSave">保存</button>
+        <button class="btn" id="vendorModalCancel" type="button">キャンセル</button>
+        <button class="btn primary" id="vendorModalSave" type="button">保存</button>
       </div>
     </div>
   </div>
@@ -504,8 +490,11 @@
   const $ = (q) => document.querySelector(q);
   const $$ = (q) => Array.from(document.querySelectorAll(q));
 
+  function escapeHtml(s){
+    return String(s ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+  }
+
   function localISODate(d=new Date()){
-    // local date as YYYY-MM-DD (no UTC drift)
     const y = d.getFullYear();
     const m = String(d.getMonth()+1).padStart(2,'0');
     const day = String(d.getDate()).padStart(2,'0');
@@ -521,9 +510,9 @@
     return localISODate(dt);
   }
 
-
   function toast(msg){
     const t = $('#toast');
+    if(!t) return;
     t.textContent = msg;
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 1200);
@@ -553,7 +542,6 @@
       await navigator.clipboard.writeText(text);
       toast('コピーしました');
     }catch(e){
-      // fallback
       const ta = document.createElement('textarea');
       ta.value = text;
       document.body.appendChild(ta);
@@ -565,136 +553,134 @@
   }
 
   // ---------- vendor channels ----------
-// channel: 'infomart' | 'web' | 'line'
-const DEFAULT_VENDOR_CHANNEL = {
-  '大光': 'infomart',
-  '高瀬': 'infomart',
-  'toho': 'web',
-  'TOHO': 'web',
-  'マルト': 'web',
-  'めいらく': 'web',
-  '安田青果': 'line',
-  'トキノ屋': 'line',
-};
-
-// ---------- delivery / cutoff defaults (editable) ----------
-// deliveryDays: 0=日 ... 6=土
-const ALL_DAYS = [0,1,2,3,4,5,6];
-const DOW_LABELS = ['日','月','火','水','木','金','土'];
-
-// schedule is stored per-vendor as vendor.schedule in master
-const DEFAULT_VENDOR_SCHEDULE = {
-  '大光':    { deliveryDays:[1,2,3,4,5], cutoffTime:'14:30', cutoffOffsetDays:1, noHolidays:false, blockDates:[] },
-  '高瀬':    { deliveryDays:[1,2,3,4,5], cutoffTime:'03:00', cutoffOffsetDays:0, noHolidays:true,  blockDates:[] },
-  'マルト':  { deliveryDays:ALL_DAYS,    cutoffTime:'03:00', cutoffOffsetDays:0, noHolidays:false, blockDates:[] },
-  'めいらく': {deliveryDays:[1,3,5],     cutoffTime:'16:00', cutoffOffsetDays:1, noHolidays:false, blockDates:[] },
-  'TOHO':    { deliveryDays:[2,5],       cutoffTime:'03:00', cutoffOffsetDays:0, noHolidays:false, blockDates:[] },
-  'toho':    { deliveryDays:[2,5],       cutoffTime:'03:00', cutoffOffsetDays:0, noHolidays:false, blockDates:[] },
-  '安田青果': {deliveryDays:ALL_DAYS,    cutoffTime:'03:00', cutoffOffsetDays:0, noHolidays:false, blockDates:[] },
-  'トキノ屋': {deliveryDays:ALL_DAYS,    cutoffTime:'03:00', cutoffOffsetDays:0, noHolidays:false, blockDates:[] },
-};
-
-function getVendorObj(name){
-  return master?.vendors?.find(x => x.name === name) || null;
-}
-
-function vendorChannel(name){
-  const v = getVendorObj(name);
-  return (v && v.channel) ? v.channel : (DEFAULT_VENDOR_CHANNEL[name] || 'web');
-}
-
-function channelLabel(ch){
-  return ch === 'infomart' ? 'Infomart' : ch === 'line' ? 'LINE' : 'WEB';
-}
-
-function normalizeDays(arr, fallback){
-  const base = Array.isArray(arr) ? arr : (fallback || []);
-  const s = new Set(base.map(n => Number(n)).filter(n => Number.isFinite(n) && n>=0 && n<=6));
-  const out = Array.from(s).sort((a,b)=>a-b);
-  return out.length ? out : (fallback || [1,2,3,4,5]);
-}
-
-function normalizeBlockDates(arr){
-  const out = [];
-  for(const x of (Array.isArray(arr) ? arr : [])){
-    const s = String(x).slice(0,10);
-    if(/^\d{4}-\d{2}-\d{2}$/.test(s)) out.push(s);
-  }
-  return Array.from(new Set(out)).sort();
-}
-
-function scheduleForVendor(name){
-  const v = getVendorObj(name);
-  const base = DEFAULT_VENDOR_SCHEDULE[name] || { deliveryDays:[1,2,3,4,5], cutoffTime:'03:00', cutoffOffsetDays:0, noHolidays:false, blockDates:[] };
-  const sch = (v && v.schedule) ? v.schedule : base;
-  const days = normalizeDays(sch.deliveryDays, base.deliveryDays);
-  const blockDates = normalizeBlockDates(sch.blockDates || base.blockDates);
-  const cutoffTime = String(sch.cutoffTime || base.cutoffTime || '03:00');
-  const cutoffOffsetDays = Number(sch.cutoffOffsetDays);
-  return {
-    deliveryDays: days,
-    cutoffTime,
-    cutoffOffsetDays: (cutoffOffsetDays === 1 ? 1 : 0),
-    noHolidays: !!(sch.noHolidays ?? base.noHolidays),
-    blockDates,
+  // channel: 'infomart' | 'web' | 'line'
+  const DEFAULT_VENDOR_CHANNEL = {
+    '大光': 'infomart',
+    '高瀬': 'infomart',
+    'toho': 'web',
+    'TOHO': 'web',
+    'マルト': 'web',
+    'めいらく': 'web',
+    '安田青果': 'line',
+    'トキノ屋': 'line',
   };
-}
 
-function daysSummary(days){
-  const s = normalizeDays(days, days);
-  if(s.length === 7) return '毎日';
-  const key = s.join(',');
-  if(key === '1,2,3,4,5') return '月〜金';
-  if(key === '1,2,3,4,5,6') return '月〜土';
-  if(key === '0,6') return '土日';
-  // consecutive range (e.g., 火〜金)
-  let consec = true;
-  for(let i=0;i<s.length-1;i++){
-    if(s[i+1] !== s[i] + 1){ consec = false; break; }
+  // ---------- delivery / cutoff defaults (editable) ----------
+  // deliveryDays: 0=日 ... 6=土
+  const ALL_DAYS = [0,1,2,3,4,5,6];
+  const DOW_LABELS = ['日','月','火','水','木','金','土'];
+
+  // schedule is stored per-vendor as vendor.schedule in master
+  const DEFAULT_VENDOR_SCHEDULE = {
+    '大光':     { deliveryDays:[1,2,3,4,5], cutoffTime:'14:30', cutoffOffsetDays:1, noHolidays:false, blockDates:[] },
+    '高瀬':     { deliveryDays:[1,2,3,4,5], cutoffTime:'03:00', cutoffOffsetDays:0, noHolidays:true,  blockDates:[] },
+    'マルト':   { deliveryDays:ALL_DAYS,    cutoffTime:'03:00', cutoffOffsetDays:0, noHolidays:false, blockDates:[] },
+    'めいらく': { deliveryDays:[1,3,5],     cutoffTime:'16:00', cutoffOffsetDays:1, noHolidays:false, blockDates:[] },
+    'TOHO':     { deliveryDays:[2,5],       cutoffTime:'03:00', cutoffOffsetDays:0, noHolidays:false, blockDates:[] },
+    'toho':     { deliveryDays:[2,5],       cutoffTime:'03:00', cutoffOffsetDays:0, noHolidays:false, blockDates:[] },
+    '安田青果': { deliveryDays:ALL_DAYS,    cutoffTime:'03:00', cutoffOffsetDays:0, noHolidays:false, blockDates:[] },
+    'トキノ屋': { deliveryDays:ALL_DAYS,    cutoffTime:'03:00', cutoffOffsetDays:0, noHolidays:false, blockDates:[] },
+  };
+
+  function getVendorObj(name){
+    return master?.vendors?.find(x => x.name === name) || null;
   }
-  if(consec && s.length >= 3) return `${DOW_LABELS[s[0]]}〜${DOW_LABELS[s[s.length-1]]}`;
-  return s.map(d => DOW_LABELS[d]).join('・');
-}
 
-function cutoffLabel(name){
-  const sch = scheduleForVendor(name);
-  const when = sch.cutoffOffsetDays === 1 ? '前日' : '当日';
-  return `${when}${sch.cutoffTime}`;
-}
-
-function weekdayOf(dateStr){
-  const [y,m,d] = String(dateStr).split('-').map(n => parseInt(n,10));
-  const dt = new Date(y, (m||1)-1, d||1);
-  return dt.getDay();
-}
-
-function isDeliveryDay(name, dateStr){
-  const sch = scheduleForVendor(name);
-  if(sch.blockDates.includes(dateStr)) return false;
-  const dow = weekdayOf(dateStr);
-  return sch.deliveryDays.includes(dow);
-}
-
-function nextDeliveryDate(name, fromDateStr){
-  for(let i=0;i<30;i++){
-    const d = addDays(fromDateStr, i);
-    if(isDeliveryDay(name, d)) return d;
+  function vendorChannel(name){
+    const v = getVendorObj(name);
+    return (v && v.channel) ? v.channel : (DEFAULT_VENDOR_CHANNEL[name] || 'web');
   }
-  return fromDateStr;
-}
 
-function cutoffDateTimeForDelivery(name, deliveryDateStr){
-  const sch = scheduleForVendor(name);
-  const deadlineDate = addDays(deliveryDateStr, sch.cutoffOffsetDays === 1 ? -1 : 0);
-  return { date: deadlineDate, time: sch.cutoffTime, when: (sch.cutoffOffsetDays===1?'前日':'当日') };
-}
+  function channelLabel(ch){
+    return ch === 'infomart' ? 'Infomart' : ch === 'line' ? 'LINE' : 'WEB';
+  }
 
-// ---------- storage keys ----------
+  function normalizeDays(arr, fallback){
+    const base = Array.isArray(arr) ? arr : (fallback || []);
+    const s = new Set(base.map(n => Number(n)).filter(n => Number.isFinite(n) && n>=0 && n<=6));
+    const out = Array.from(s).sort((a,b)=>a-b);
+    return out.length ? out : (fallback || [1,2,3,4,5]);
+  }
+
+  function normalizeBlockDates(arr){
+    const out = [];
+    for(const x of (Array.isArray(arr) ? arr : [])){
+      const s = String(x).slice(0,10);
+      if(/^\d{4}-\d{2}-\d{2}$/.test(s)) out.push(s);
+    }
+    return Array.from(new Set(out)).sort();
+  }
+
+  function scheduleForVendor(name){
+    const v = getVendorObj(name);
+    const base = DEFAULT_VENDOR_SCHEDULE[name] || { deliveryDays:[1,2,3,4,5], cutoffTime:'03:00', cutoffOffsetDays:0, noHolidays:false, blockDates:[] };
+    const sch = (v && v.schedule) ? v.schedule : base;
+    const days = normalizeDays(sch.deliveryDays, base.deliveryDays);
+    const blockDates = normalizeBlockDates(sch.blockDates || base.blockDates);
+    const cutoffTime = String(sch.cutoffTime || base.cutoffTime || '03:00');
+    const cutoffOffsetDays = Number(sch.cutoffOffsetDays);
+    return {
+      deliveryDays: days,
+      cutoffTime,
+      cutoffOffsetDays: (cutoffOffsetDays === 1 ? 1 : 0),
+      noHolidays: !!(sch.noHolidays ?? base.noHolidays),
+      blockDates,
+    };
+  }
+
+  function daysSummary(days){
+    const s = normalizeDays(days, days);
+    if(s.length === 7) return '毎日';
+    const key = s.join(',');
+    if(key === '1,2,3,4,5') return '月〜金';
+    if(key === '1,2,3,4,5,6') return '月〜土';
+    if(key === '0,6') return '土日';
+    let consec = true;
+    for(let i=0;i<s.length-1;i++){
+      if(s[i+1] !== s[i] + 1){ consec = false; break; }
+    }
+    if(consec && s.length >= 3) return `${DOW_LABELS[s[0]]}〜${DOW_LABELS[s[s.length-1]]}`;
+    return s.map(d => DOW_LABELS[d]).join('・');
+  }
+
+  function cutoffLabel(name){
+    const sch = scheduleForVendor(name);
+    const when = sch.cutoffOffsetDays === 1 ? '前日' : '当日';
+    return `${when}${sch.cutoffTime}`;
+  }
+
+  function weekdayOf(dateStr){
+    const [y,m,d] = String(dateStr).split('-').map(n => parseInt(n,10));
+    const dt = new Date(y, (m||1)-1, d||1);
+    return dt.getDay();
+  }
+
+  function isDeliveryDay(name, dateStr){
+    const sch = scheduleForVendor(name);
+    if(sch.blockDates.includes(dateStr)) return false;
+    const dow = weekdayOf(dateStr);
+    return sch.deliveryDays.includes(dow);
+  }
+
+  function nextDeliveryDate(name, fromDateStr){
+    for(let i=0;i<30;i++){
+      const d = addDays(fromDateStr, i);
+      if(isDeliveryDay(name, d)) return d;
+    }
+    return fromDateStr;
+  }
+
+  function cutoffDateTimeForDelivery(name, deliveryDateStr){
+    const sch = scheduleForVendor(name);
+    const deadlineDate = addDays(deliveryDateStr, sch.cutoffOffsetDays === 1 ? -1 : 0);
+    return { date: deadlineDate, time: sch.cutoffTime, when: (sch.cutoffOffsetDays===1?'前日':'当日') };
+  }
+
+  // ---------- storage keys ----------
   const KEY_MASTER = 'orderAssist.master.v1';
   const KEY_ORDERS = 'orderAssist.orders.v1'; // {date: {vendor: {itemName: {qty, unit, memo}}}}
+  const KEY_CLOUD  = 'orderAssist.cloud.v1';
 
-
-  const KEY_CLOUD = 'orderAssist.cloud.v1';
   function getCloud(){
     const raw = localStorage.getItem(KEY_CLOUD);
     if(!raw) return { enabled:false, autoPush:true, storeId:'kudeta', scriptUrl:'', apiKey:'' };
@@ -730,17 +716,135 @@ function cutoffDateTimeForDelivery(name, deliveryDateStr){
     u.searchParams.set('action','get');
     u.searchParams.set('storeId', cloud.storeId || 'kudeta');
     u.searchParams.set('date', date);
-    if(cloud.apiKey) u.searchParams.set('key', cloud.apiKey);
+    if(cloud.apiKey) u.searchParams.set('key', cloud.apiKey); // ← Apps Script側の想定に合わせる（key）
     return u.toString();
   }
 
   function buildCloudPostUrl(){
     const u = new URL(cloud.scriptUrl);
     u.searchParams.set('action','save');
-    if(cloud.apiKey) u.searchParams.set('key', cloud.apiKey);
+    if(cloud.apiKey) u.searchParams.set('key', cloud.apiKey); // ← key
     return u.toString();
   }
 
+  function getMaster(){
+    const raw = localStorage.getItem(KEY_MASTER);
+    if(!raw) return null;
+    try{ return JSON.parse(raw); }catch(e){ return null; }
+  }
+  function setMaster(m){
+    localStorage.setItem(KEY_MASTER, JSON.stringify(m));
+  }
+
+  function getOrders(){
+    const raw = localStorage.getItem(KEY_ORDERS);
+    if(!raw) return {};
+    try{ return JSON.parse(raw); }catch(e){ return {}; }
+  }
+  function setOrders(o){
+    localStorage.setItem(KEY_ORDERS, JSON.stringify(o));
+  }
+
+  // ---------- app state ----------
+  let master = null;
+  let sortMode = false;
+  let orders = getOrders();
+  let currentVendor = null;
+  let currentDate = localISODate();
+
+  // ---------- seed ----------
+  async function initMaster(){
+    const existing = getMaster();
+    if(existing){ master = existing; return; }
+
+    const res = await fetch('master_seed.json', {cache:'no-store'});
+    const seed = await res.json();
+
+    seed.vendors = (seed.vendors || []).map(v => ({
+      name: String(v.name || '').trim(),
+      channel: String(v.channel || DEFAULT_VENDOR_CHANNEL[String(v.name||'').trim()] || 'web'),
+      items: (v.items || []).map(it => ({
+        name: String(it.name || '').trim(),
+        unit: String(it.unit || ''),
+        memo: String(it.memo || ''),
+        idealStock: (it.idealStock==null? '' : String(it.idealStock))
+      })).filter(it => it.name),
+      schedule: v.schedule || DEFAULT_VENDOR_SCHEDULE[String(v.name||'').trim()] || {deliveryDays:[1,2,3,4,5], cutoffTime:'03:00', cutoffOffsetDays:0, noHolidays:false, blockDates:[]}
+    })).filter(v => v.name);
+
+    master = seed;
+    setMaster(master);
+  }
+
+  function migrateMaster(){
+    let changed = false;
+    if(!master || !Array.isArray(master.vendors)) return false;
+    for(const v of master.vendors){
+      if(!v.schedule){
+        v.schedule = DEFAULT_VENDOR_SCHEDULE[String(v.name||'').trim()] || { deliveryDays:[1,2,3,4,5], cutoffTime:'03:00', cutoffOffsetDays:0, noHolidays:false, blockDates:[] };
+        changed = true;
+      }
+      if(!Array.isArray(v.items)) v.items = [];
+      for(const it of v.items){
+        if(it.idealStock === undefined){ it.idealStock = ''; changed = true; }
+        if(it.unit === undefined) it.unit = '';
+        if(it.memo === undefined) it.memo = '';
+      }
+    }
+    if(changed) setMaster(master);
+    return changed;
+  }
+
+  function ensureDay(date){
+    if(!orders[date]) orders[date] = {};
+    for(const v of master.vendors){
+      if(!orders[date][v.name]) orders[date][v.name] = {};
+    }
+  }
+
+  function getQty(date, vendor, itemName){
+    ensureDay(date);
+    const x = orders[date][vendor][itemName];
+    return x ? Number(x.qty || 0) : 0;
+  }
+
+  const saveStateEl = $('#saveState');
+  let saveTimer = null;
+
+  function markSaving(){
+    if(!saveStateEl) return;
+    saveStateEl.textContent = '保存中…';
+    saveStateEl.classList.remove('ok');
+  }
+  function markSaved(){
+    if(!saveStateEl) return;
+    saveStateEl.textContent = 'OK';
+    saveStateEl.classList.add('ok');
+  }
+
+  function scheduleSave(){
+    markSaving();
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      setOrders(orders);
+      markSaved();
+    }, 250);
+  }
+
+  function setQty(date, vendor, item){
+    ensureDay(date);
+    const now = Date.now();
+    if(!orders[date][vendor][item.name]) orders[date][vendor][item.name] = {qty:0, unit:item.unit, memo:item.memo, updatedAt: now};
+    const obj = orders[date][vendor][item.name];
+    obj.qty = Number(item.qty || 0);
+    obj.unit = item.unit || '';
+    obj.memo = item.memo || '';
+    obj.updatedAt = now;
+    scheduleSave();
+    scheduleCloudPush();
+  }
+
+  // ---------- cloud ----------
   function buildDayPayload(date){
     ensureDay(date);
     const out = {};
@@ -842,9 +946,9 @@ function cutoffDateTimeForDelivery(name, deliveryDateStr){
     }
   }
 
+  // ★重複宣言してたのを1つに統一（これがボタン無反応の最大原因）
   let cloudPushTimer = null;
 
-  let cloudPushTimer = null;
   function scheduleCloudPush(){
     if(!cloudReady()) return;
     if(!cloud.autoPush) return;
@@ -891,124 +995,10 @@ function cutoffDateTimeForDelivery(name, deliveryDateStr){
     refresh();
   }
 
-  const saveStateEl = $('#saveState');
-  let saveTimer = null;
-  function markSaving(){
-    saveStateEl.textContent = '保存中…';
-    saveStateEl.classList.remove('ok');
-  }
-  function markSaved(){
-    saveStateEl.textContent = 'OK';
-    saveStateEl.classList.add('ok');
-  }
-
-  function getMaster(){
-    const raw = localStorage.getItem(KEY_MASTER);
-    if(!raw) return null;
-    try{ return JSON.parse(raw); }catch(e){ return null; }
-  }
-  function setMaster(master){
-    localStorage.setItem(KEY_MASTER, JSON.stringify(master));
-  }
-
-  function getOrders(){
-    const raw = localStorage.getItem(KEY_ORDERS);
-    if(!raw) return {};
-    try{ return JSON.parse(raw); }catch(e){ return {}; }
-  }
-  function setOrders(orders){
-    localStorage.setItem(KEY_ORDERS, JSON.stringify(orders));
-  }
-
-  // ---------- app state ----------
-  let master = null;
-  let sortMode = false; // 商品並べ替えモード
-  let orders = getOrders();
-  let currentVendor = null;
-  let currentDate = localISODate();
-
-  // ---------- data init ----------
-  async function initMaster(){
-    const existing = getMaster();
-    if(existing){ master = existing; return; }
-
-    const res = await fetch('master_seed.json', {cache:'no-store'});
-    const seed = await res.json();
-    // normalize
-    seed.vendors = (seed.vendors || []).map(v => ({
-      name: String(v.name || '').trim(),
-      channel: String(v.channel || DEFAULT_VENDOR_CHANNEL[String(v.name||'').trim()] || 'web'),
-      items: (v.items || []).map(it => ({
-        name: String(it.name || '').trim(),
-        unit: String(it.unit || ''),
-        memo: String(it.memo || ''),
-        idealStock: (it.idealStock==null? '' : String(it.idealStock))
-      })).filter(it => it.name),
-      schedule: v.schedule || DEFAULT_VENDOR_SCHEDULE[String(v.name||'').trim()] || {deliveryDays:[1,2,3,4,5], cutoffTime:'03:00', cutoffOffsetDays:0, noHolidays:false, blockDates:[]}
-    })).filter(v => v.name);
-
-    master = seed;
-    setMaster(master);
-  }
-
-  function migrateMaster(){
-    let changed = false;
-    if(!master || !Array.isArray(master.vendors)) return false;
-    for(const v of master.vendors){
-      if(!v.schedule){
-        v.schedule = DEFAULT_VENDOR_SCHEDULE[String(v.name||'').trim()] || { deliveryDays:[1,2,3,4,5], cutoffTime:'03:00', cutoffOffsetDays:0, noHolidays:false, blockDates:[] };
-        changed = true;
-      }
-      if(!Array.isArray(v.items)) v.items = [];
-      for(const it of v.items){
-        if(it.idealStock === undefined){ it.idealStock = ''; changed = true; }
-        if(it.unit === undefined) it.unit = '';
-        if(it.memo === undefined) it.memo = '';
-      }
-    }
-    if(changed) setMaster(master);
-    return changed;
-  }
-
-
-  function ensureDay(date){
-    if(!orders[date]) orders[date] = {};
-    for(const v of master.vendors){
-      if(!orders[date][v.name]) orders[date][v.name] = {};
-    }
-  }
-
-  function getQty(date, vendor, itemName){
-    ensureDay(date);
-    const x = orders[date][vendor][itemName];
-    return x ? Number(x.qty || 0) : 0;
-  }
-
-  function setQty(date, vendor, item){
-    ensureDay(date);
-    const now = Date.now();
-    if(!orders[date][vendor][item.name]) orders[date][vendor][item.name] = {qty:0, unit:item.unit, memo:item.memo, updatedAt: now};
-    const obj = orders[date][vendor][item.name];
-    obj.qty = Number(item.qty || 0);
-    obj.unit = item.unit || '';
-    obj.memo = item.memo || '';
-    obj.updatedAt = now;
-    scheduleSave();
-    scheduleCloudPush();
-  }
-
-  function scheduleSave(){
-    markSaving();
-    clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => {
-      setOrders(orders);
-      markSaved();
-    }, 250);
-  }
-
   // ---------- rendering ----------
   function renderVendors(){
     const list = $('#vendorList');
+    if(!list) return;
     list.innerHTML = '';
     const day = orders[currentDate] || {};
 
@@ -1037,7 +1027,6 @@ function cutoffDateTimeForDelivery(name, deliveryDateStr){
       list.appendChild(el);
     });
 
-    // auto select first
     if(!currentVendor && master.vendors.length){
       currentVendor = master.vendors[0].name;
       $('#vendorTitle').textContent = `商品：${currentVendor}`;
@@ -1048,13 +1037,13 @@ function cutoffDateTimeForDelivery(name, deliveryDateStr){
   function renderItems(){
     const v = master.vendors.find(x => x.name === currentVendor);
     const list = $('#itemList');
+    if(!list) return;
     list.innerHTML = '';
     if(!v){
       list.innerHTML = `<div class="muted">業者を選んでください</div>`;
       return;
     }
 
-    // 並べ替えモード：検索/数量入力を一旦止めて、順番だけを操作
     if(sortMode){
       if(v.items.length === 0){
         list.innerHTML = `<div class="muted">商品がありません。まずは商品追加してください。</div>`;
@@ -1075,12 +1064,11 @@ function cutoffDateTimeForDelivery(name, deliveryDateStr){
             </div>
           </div>
           <div class="row" style="gap:6px">
-            <button class="btn small" data-move="up" title="上へ">↑</button>
-            <button class="btn small" data-move="down" title="下へ">↓</button>
+            <button class="btn small" data-move="up" title="上へ" type="button">↑</button>
+            <button class="btn small" data-move="down" title="下へ" type="button">↓</button>
           </div>
         `;
 
-        // up/down
         row.querySelectorAll('button[data-move]').forEach(btn => {
           btn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -1095,7 +1083,6 @@ function cutoffDateTimeForDelivery(name, deliveryDateStr){
           });
         });
 
-        // drag & drop
         row.addEventListener('dragstart', (e) => {
           try{
             e.dataTransfer.effectAllowed = 'move';
@@ -1147,10 +1134,10 @@ function cutoffDateTimeForDelivery(name, deliveryDateStr){
           </div>
         </div>
         <div class="qtyBox">
-          <button class="btn small" data-act="editItem" title="商品設定">⚙</button>
-          <button class="qtyBtn" data-delta="-1">−</button>
+          <button class="btn small" data-act="editItem" title="商品設定" type="button">⚙</button>
+          <button class="qtyBtn" data-delta="-1" type="button">−</button>
           <input class="qtyInput" inputmode="numeric" pattern="[0-9]*" value="${qty}" />
-          <button class="qtyBtn" data-delta="+1">＋</button>
+          <button class="qtyBtn" data-delta="+1" type="button">＋</button>
         </div>
       `;
 
@@ -1168,19 +1155,16 @@ function cutoffDateTimeForDelivery(name, deliveryDateStr){
         const newQty = clamp(n);
         input.value = String(newQty);
         setQty(currentDate, v.name, {...it, qty:newQty});
-        renderVendorBadge(v.name);
+        renderVendors();
         renderTodaySummary(false);
       }
 
       minus.addEventListener('click', () => commit(Number(input.value||0) - 1));
       plus.addEventListener('click', () => commit(Number(input.value||0) + 1));
-
       input.addEventListener('change', () => {
         const n = Number(String(input.value).replace(/[^0-9]/g,''));
         commit(n);
       });
-
-      // long press to zero? (optional)
       input.addEventListener('dblclick', () => commit(0));
 
       const editBtn = row.querySelector('[data-act="editItem"]');
@@ -1193,11 +1177,6 @@ function cutoffDateTimeForDelivery(name, deliveryDateStr){
 
       list.appendChild(row);
     }
-  }
-
-  function renderVendorBadge(vendor){
-    // quick refresh of vendor list counts
-    renderVendors();
   }
 
   function fmtMD(date){
@@ -1229,7 +1208,6 @@ function cutoffDateTimeForDelivery(name, deliveryDateStr){
     const ch = vendorChannel(vendor);
     const items = collectVendorLines(date, vendor);
 
-    // LINE向け：そのまま貼れる文章
     if(ch === 'line'){
       const out = [];
       out.push(`${vendor}さん`);
@@ -1246,7 +1224,6 @@ function cutoffDateTimeForDelivery(name, deliveryDateStr){
       return out.join('\n');
     }
 
-    // WEB / Infomart向け：転記しやすいリスト
     const out = [];
     out.push(`【${date}】 ${vendor} 発注（${channelLabel(ch)}）`);
     if(!items.length){
@@ -1257,10 +1234,8 @@ function cutoffDateTimeForDelivery(name, deliveryDateStr){
     for(const it of items){
       const qtyPart = `${it.qty}${it.unit ? ' ' + it.unit : ''}`;
       if(ch === 'infomart'){
-        // 表計算的に揃うようタブ区切り寄り
-        out.push(`${it.name}	${qtyPart}${it.memo ? '	' + it.memo : ''}`);
+        out.push(`${it.name}\t${qtyPart}${it.memo ? '\t' + it.memo : ''}`);
       }else{
-        // WEBフォームは短めで
         out.push(`- ${it.name}：${qtyPart}${it.memo ? '（' + it.memo + '）' : ''}`);
       }
     }
@@ -1270,7 +1245,6 @@ function cutoffDateTimeForDelivery(name, deliveryDateStr){
   function buildCSVRowsForVendor(date, vendor){
     const ch = vendorChannel(vendor);
     const items = collectVendorLines(date, vendor);
-    // 汎用：Infomart転記・バックアップ用途
     const rows = [['date','vendor','channel','item','qty','unit','memo']];
     for(const it of items){
       rows.push([date, vendor, channelLabel(ch), it.name, it.qty, it.unit || '', it.memo || '']);
@@ -1281,7 +1255,6 @@ function cutoffDateTimeForDelivery(name, deliveryDateStr){
   function buildAllText(date){
     const blocks = [];
     for(const v of master.vendors){
-      // include only if has at least one qty
       const has = collectVendorLines(date, v.name).length > 0;
       if(has) blocks.push(buildTextForVendor(date, v.name));
     }
@@ -1306,6 +1279,7 @@ function cutoffDateTimeForDelivery(name, deliveryDateStr){
 
   function renderTodaySummary(scrollTop=true){
     const wrap = $('#todaySummary');
+    if(!wrap) return;
     wrap.innerHTML = '';
 
     let any = false;
@@ -1336,14 +1310,17 @@ function cutoffDateTimeForDelivery(name, deliveryDateStr){
             <div class="muted" style="font-size:12px">${escapeHtml(scheduleLine)}</div>
           </div>
           <div class="row">
-            <button class="btn small" data-act="copy">コピー</button>
-            <button class="btn small" data-act="txt">TXT保存</button>
-            ${vendorChannel(v.name)==='infomart' ? '<button class="btn small" data-act="csv">CSV</button>' : ''}
+            <button class="btn small" data-act="copy" type="button">コピー</button>
+            <button class="btn small" data-act="txt" type="button">TXT保存</button>
+            ${vendorChannel(v.name)==='infomart' ? '<button class="btn small" data-act="csv" type="button">CSV</button>' : ''}
           </div>
         </div>
         <div class="hr"></div>
-        <textarea readonly class="mono">${escapeHtml(txt)}</textarea>
+        <textarea readonly class="mono"></textarea>
       `;
+
+      const ta = card.querySelector('textarea');
+      ta.value = txt; // ← escapeせずそのまま表示
 
       card.querySelector('[data-act="copy"]').addEventListener('click', () => copyToClipboard(txt));
       card.querySelector('[data-act="txt"]').addEventListener('click', () => downloadText(`${currentDate}_${v.name}_発注.txt`, txt));
@@ -1369,6 +1346,7 @@ function cutoffDateTimeForDelivery(name, deliveryDateStr){
 
   function renderHistory(){
     const list = $('#historyList');
+    if(!list) return;
     list.innerHTML = '';
     const dates = Object.keys(orders).sort((a,b)=> b.localeCompare(a));
     if(!dates.length){
@@ -1403,11 +1381,7 @@ function cutoffDateTimeForDelivery(name, deliveryDateStr){
     }
   }
 
-  function escapeHtml(s){
-    return String(s ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
-  }
-
-  // ---------- modals (item / vendor schedule) ----------
+  // ---------- modals ----------
   let editingItem = null; // {vendorName, itemName}
   let editingVendorName = null;
 
@@ -1449,7 +1423,6 @@ function cutoffDateTimeForDelivery(name, deliveryDateStr){
       const n = Math.max(0, Math.min(999999, Math.round(Number(raw))));
       it.idealStock = Number.isFinite(n) ? String(n) : '';
     }
-    // update existing order entries' unit/memo for consistency
     for(const d of Object.keys(orders)){
       const e = orders[d]?.[v.name]?.[it.name];
       if(e){ e.unit = it.unit || ''; e.memo = it.memo || ''; }
@@ -1470,7 +1443,6 @@ function cutoffDateTimeForDelivery(name, deliveryDateStr){
     const v = master.vendors.find(x => x.name === editingItem.vendorName);
     if(!v) return;
     v.items = (v.items || []).filter(x => x.name !== editingItem.itemName);
-    // remove from orders
     for(const d of Object.keys(orders)){
       if(orders[d]?.[v.name]?.[editingItem.itemName]){
         delete orders[d][v.name][editingItem.itemName];
@@ -1597,7 +1569,8 @@ function cutoffDateTimeForDelivery(name, deliveryDateStr){
   function renderSettings(){
     renderVendorScheduleList();
   }
-// ---------- actions ----------
+
+  // ---------- actions ----------
   function onDateChange(d){
     currentDate = d;
     ensureDay(currentDate);
@@ -1626,7 +1599,8 @@ function cutoffDateTimeForDelivery(name, deliveryDateStr){
   function setTab(name){
     $$('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
     $$('.view').forEach(v => v.style.display = 'none');
-    $('#view-' + name).style.display = 'block';
+    const target = $('#view-' + name);
+    if(target) target.style.display = 'block';
     if(name !== 'vendors' && sortMode) setSortMode(false);
     if(name==='today') renderTodaySummary();
     if(name==='history') renderHistory();
@@ -1639,7 +1613,7 @@ function cutoffDateTimeForDelivery(name, deliveryDateStr){
     e.preventDefault();
     deferredPrompt = e;
     const btn = $('#installBtn');
-    btn.style.display = 'inline-block';
+    if(btn) btn.style.display = 'inline-block';
   });
   $('#installBtn').addEventListener('click', async () => {
     if(!deferredPrompt){ toast('この端末では表示できません'); return; }
@@ -1660,14 +1634,10 @@ function cutoffDateTimeForDelivery(name, deliveryDateStr){
     $('#date').addEventListener('change', (e) => onDateChange(e.target.value));
 
     // quick date controls
-    const p = $('#prevDayBtn');
-    const n = $('#nextDayBtn');
-    const t = $('#todayBtn');
     const setAndChange = (d) => { $('#date').value = d; onDateChange(d); };
-    if(p) p.addEventListener('click', () => setAndChange(addDays(currentDate, -1)));
-    if(n) n.addEventListener('click', () => setAndChange(addDays(currentDate, 1)));
-    if(t) t.addEventListener('click', () => setAndChange(localISODate()));
-
+    $('#prevDayBtn').addEventListener('click', () => setAndChange(addDays(currentDate, -1)));
+    $('#nextDayBtn').addEventListener('click', () => setAndChange(addDays(currentDate, 1)));
+    $('#todayBtn').addEventListener('click', () => setAndChange(localISODate()));
 
     // tabs
     $$('.tab').forEach(t => t.addEventListener('click', () => setTab(t.dataset.tab)));
@@ -1743,7 +1713,7 @@ function cutoffDateTimeForDelivery(name, deliveryDateStr){
       if(!v) return;
       const exists = v.items.some(it => it.name === name.trim());
       if(exists){ toast('同名の商品があります'); return; }
-      v.items.push({name:name.trim(), unit:unit.trim(), memo:memo.trim()});
+      v.items.push({name:name.trim(), unit:unit.trim(), memo:memo.trim(), idealStock:''});
       setMaster(master);
       renderVendors();
       renderItems();
@@ -1803,7 +1773,7 @@ function cutoffDateTimeForDelivery(name, deliveryDateStr){
       if(!ok) return;
       localStorage.removeItem(KEY_MASTER);
       await initMaster();
-    migrateMaster();
+      migrateMaster();
       renderVendors();
       renderItems();
       renderTodaySummary(false);
