@@ -1,5 +1,5 @@
 /* simple offline cache */
-const CACHE = 'order-assist-v5';
+const CACHE = 'order-assist-v6';
 const ASSETS = [
   './',
   './index.html',

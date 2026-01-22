@@ -371,14 +371,35 @@
         <div class="muted" style="margin:8px 0 12px">業者ごとに「納品曜日」と「発注締切（当日/前日＋時刻）」を保存できます。</div>
         <div id="vendorScheduleList" class="list" style="margin-bottom:12px"></div>
         <div class="muted" style="font-size:12px">※「高瀬：祝日NG」など例外は、業者の「除外日」に日付を入れてください。</div>
-
         <div class="hr"></div>
-        <h2 style="margin-top:0">同期版（次の一手）</h2>
-        <div class="muted">
-          「誰が」「いつ」「どれを発注したか」や、複数iPad/スマホで共有をやりたくなったら、
-          Firebase / Supabase でログイン＋同期を追加できます。
-          まずはこの版で現場の流れを固めるのが一番速いです。
+        <h2 style="margin-top:0">クラウド同期（Googleスプレッドシート）</h2>
+        <div class="muted" style="margin:8px 0 12px">複数iPadで「同じ数量」を共有します。Googleスプレッドシートに保存／読み込みします。</div>
+        <div class="field">
+          <label><input type="checkbox" id="cloudEnable" /> クラウド同期を有効化</label>
         </div>
+        <div class="field">
+          <label>Apps Script WebアプリURL（.../exec）</label>
+          <input id="cloudUrl" type="text" placeholder="https://script.google.com/macros/s/XXXX/exec" />
+        </div>
+        <div class="field">
+          <label>店舗ID（共有キー）</label>
+          <input id="cloudStoreId" type="text" placeholder="例：kudeta" />
+        </div>
+        <div class="field">
+          <label>APIキー（任意・推奨）</label>
+          <input id="cloudKey" type="text" placeholder="例：任意の合言葉" />
+        </div>
+        <div class="row" style="gap:10px; align-items:center; margin-top:8px">
+          <label class="btn" style="display:flex; gap:8px; align-items:center">
+            <input type="checkbox" id="cloudAuto" style="transform:scale(1.1)" />
+            自動でクラウドへ保存
+          </label>
+          <button class="btn" id="cloudPullBtn">クラウドから読み込み</button>
+          <button class="btn primary" id="cloudPushBtn">クラウドへ保存</button>
+          <span class="pill" id="cloudStatus">未設定</span>
+        </div>
+        <div class="muted" style="font-size:12px; margin-top:6px">※同期は「その日付の発注」を丸ごと保存／読み込みします（最後に保存した端末が優先）。</div>
+
       </div>
     </section>
   </main>
@@ -672,6 +693,204 @@ function cutoffDateTimeForDelivery(name, deliveryDateStr){
   const KEY_MASTER = 'orderAssist.master.v1';
   const KEY_ORDERS = 'orderAssist.orders.v1'; // {date: {vendor: {itemName: {qty, unit, memo}}}}
 
+
+  const KEY_CLOUD = 'orderAssist.cloud.v1';
+  function getCloud(){
+    const raw = localStorage.getItem(KEY_CLOUD);
+    if(!raw) return { enabled:false, autoPush:true, storeId:'kudeta', scriptUrl:'', apiKey:'' };
+    try{
+      const x = JSON.parse(raw);
+      return {
+        enabled: !!x.enabled,
+        autoPush: x.autoPush !== false,
+        storeId: String(x.storeId || 'kudeta'),
+        scriptUrl: String(x.scriptUrl || ''),
+        apiKey: String(x.apiKey || ''),
+      };
+    }catch(e){
+      return { enabled:false, autoPush:true, storeId:'kudeta', scriptUrl:'', apiKey:'' };
+    }
+  }
+  function setCloud(c){
+    localStorage.setItem(KEY_CLOUD, JSON.stringify(c));
+  }
+  let cloud = getCloud();
+
+  function cloudReady(){
+    return cloud.enabled && cloud.scriptUrl.trim().startsWith('https://');
+  }
+
+  function setCloudStatus(text){
+    const el = document.getElementById('cloudStatus');
+    if(el) el.textContent = text;
+  }
+
+  function buildCloudGetUrl(date){
+    const u = new URL(cloud.scriptUrl);
+    u.searchParams.set('action','get');
+    u.searchParams.set('storeId', cloud.storeId || 'kudeta');
+    u.searchParams.set('date', date);
+    if(cloud.apiKey) u.searchParams.set('key', cloud.apiKey);
+    return u.toString();
+  }
+
+  function buildCloudPostUrl(){
+    const u = new URL(cloud.scriptUrl);
+    u.searchParams.set('action','save');
+    if(cloud.apiKey) u.searchParams.set('key', cloud.apiKey);
+    return u.toString();
+  }
+
+  function buildDayPayload(date){
+    ensureDay(date);
+    const out = {};
+    for(const v of master.vendors){
+      const vname = v.name;
+      const items = orders[date][vname] || {};
+      for(const it of v.items){
+        const rec = items[it.name];
+        const qty = rec ? Number(rec.qty || 0) : 0;
+        if(qty !== 0){
+          if(!out[vname]) out[vname] = {};
+          out[vname][it.name] = {
+            qty,
+            unit: String(it.unit || rec?.unit || ''),
+            memo: String(it.memo || rec?.memo || ''),
+            updatedAt: Number(rec?.updatedAt || Date.now())
+          };
+        }
+      }
+    }
+    return out;
+  }
+
+  function applyCloudDay(date, cloudOrders){
+    ensureDay(date);
+    // reset all to 0
+    for(const v of master.vendors){
+      const vname = v.name;
+      if(!orders[date][vname]) orders[date][vname] = {};
+      for(const it of v.items){
+        if(!orders[date][vname][it.name]) orders[date][vname][it.name] = {qty:0, unit:it.unit||'', memo:it.memo||'', updatedAt:0};
+        orders[date][vname][it.name].qty = 0;
+      }
+    }
+    // apply cloud
+    for(const [vname, items] of Object.entries(cloudOrders || {})){
+      if(!orders[date][vname]) orders[date][vname] = {};
+      for(const [iname, rec] of Object.entries(items || {})){
+        if(!orders[date][vname][iname]) orders[date][vname][iname] = {qty:0, unit:'', memo:'', updatedAt:0};
+        orders[date][vname][iname].qty = Number(rec.qty || 0);
+        orders[date][vname][iname].unit = String(rec.unit || orders[date][vname][iname].unit || '');
+        orders[date][vname][iname].memo = String(rec.memo || orders[date][vname][iname].memo || '');
+        orders[date][vname][iname].updatedAt = Number(rec.updatedAt || Date.now());
+      }
+    }
+    setOrders(orders);
+    markSaved();
+  }
+
+  async function cloudPull(date, silent=false){
+    if(!cloudReady()){
+      if(!silent) toast('クラウド未設定です');
+      return;
+    }
+    try{
+      setCloudStatus('読み込み中…');
+      const res = await fetch(buildCloudGetUrl(date), {cache:'no-store'});
+      const data = await res.json();
+      if(!data.ok) throw new Error(data.error || '読み込み失敗');
+      applyCloudDay(date, data.orders || {});
+      renderVendors();
+      renderItems();
+      renderTodaySummary(false);
+      renderHistory();
+      setCloudStatus('同期OK');
+      if(!silent) toast('クラウドから読み込みました');
+    }catch(e){
+      setCloudStatus('同期NG');
+      if(!silent) toast('クラウド読み込み失敗');
+      console.error(e);
+    }
+  }
+
+  async function cloudPush(date, silent=false){
+    if(!cloudReady()){
+      if(!silent) toast('クラウド未設定です');
+      return;
+    }
+    try{
+      setCloudStatus('保存中…');
+      const payload = {
+        storeId: cloud.storeId || 'kudeta',
+        date,
+        orders: buildDayPayload(date)
+      };
+      const res = await fetch(buildCloudPostUrl(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if(!data.ok) throw new Error(data.error || '保存失敗');
+      setCloudStatus('同期OK');
+      if(!silent) toast('クラウドへ保存しました');
+    }catch(e){
+      setCloudStatus('同期NG');
+      if(!silent) toast('クラウド保存失敗');
+      console.error(e);
+    }
+  }
+
+  let cloudPushTimer = null;
+
+  let cloudPushTimer = null;
+  function scheduleCloudPush(){
+    if(!cloudReady()) return;
+    if(!cloud.autoPush) return;
+    clearTimeout(cloudPushTimer);
+    cloudPushTimer = setTimeout(() => cloudPush(currentDate, true), 900);
+  }
+
+  function initCloudUI(){
+    const en = document.getElementById('cloudEnable');
+    const url = document.getElementById('cloudUrl');
+    const sid = document.getElementById('cloudStoreId');
+    const key = document.getElementById('cloudKey');
+    const auto = document.getElementById('cloudAuto');
+    const pull = document.getElementById('cloudPullBtn');
+    const push = document.getElementById('cloudPushBtn');
+
+    if(!en) return;
+    en.checked = cloud.enabled;
+    if(url) url.value = cloud.scriptUrl;
+    if(sid) sid.value = cloud.storeId;
+    if(key) key.value = cloud.apiKey;
+    if(auto) auto.checked = cloud.autoPush;
+
+    const refresh = () => {
+      cloud = {
+        enabled: !!en.checked,
+        autoPush: auto ? !!auto.checked : true,
+        storeId: sid ? String(sid.value || 'kudeta').trim() : 'kudeta',
+        scriptUrl: url ? String(url.value || '').trim() : '',
+        apiKey: key ? String(key.value || '').trim() : ''
+      };
+      setCloud(cloud);
+      setCloudStatus(cloudReady() ? '準備OK' : (cloud.enabled ? 'URL未設定' : 'OFF'));
+    };
+
+    [en,url,sid,key,auto].forEach(el => {
+      if(el) el.addEventListener('change', refresh);
+      if(el && el.tagName === 'INPUT' && el.type === 'text') el.addEventListener('input', refresh);
+    });
+
+    if(pull) pull.addEventListener('click', () => cloudPull(currentDate));
+    if(push) push.addEventListener('click', () => cloudPush(currentDate));
+
+    refresh();
+  }
+
   const saveStateEl = $('#saveState');
   let saveTimer = null;
   function markSaving(){
@@ -767,11 +986,15 @@ function cutoffDateTimeForDelivery(name, deliveryDateStr){
 
   function setQty(date, vendor, item){
     ensureDay(date);
-    if(!orders[date][vendor][item.name]) orders[date][vendor][item.name] = {qty:0, unit:item.unit, memo:item.memo};
-    orders[date][vendor][item.name].qty = Number(item.qty || 0);
-    orders[date][vendor][item.name].unit = item.unit || '';
-    orders[date][vendor][item.name].memo = item.memo || '';
+    const now = Date.now();
+    if(!orders[date][vendor][item.name]) orders[date][vendor][item.name] = {qty:0, unit:item.unit, memo:item.memo, updatedAt: now};
+    const obj = orders[date][vendor][item.name];
+    obj.qty = Number(item.qty || 0);
+    obj.unit = item.unit || '';
+    obj.memo = item.memo || '';
+    obj.updatedAt = now;
     scheduleSave();
+    scheduleCloudPush();
   }
 
   function scheduleSave(){
@@ -1383,6 +1606,7 @@ function cutoffDateTimeForDelivery(name, deliveryDateStr){
     renderItems();
     renderTodaySummary(false);
     renderHistory();
+    if(cloudReady()) cloudPull(currentDate, true);
   }
 
   function setSortMode(on){
@@ -1448,6 +1672,10 @@ function cutoffDateTimeForDelivery(name, deliveryDateStr){
     // tabs
     $$('.tab').forEach(t => t.addEventListener('click', () => setTab(t.dataset.tab)));
 
+    // cloud
+    initCloudUI();
+    if(cloudReady()) cloudPull(currentDate, true);
+
     // search
     $('#itemSearch').addEventListener('input', () => renderItems());
 
@@ -1460,10 +1688,14 @@ function cutoffDateTimeForDelivery(name, deliveryDateStr){
       ensureDay(currentDate);
       const v = master.vendors.find(x => x.name === currentVendor);
       if(!v) return;
+      const now = Date.now();
       for(const it of v.items){
-        if(orders[currentDate][currentVendor]?.[it.name]) orders[currentDate][currentVendor][it.name].qty = 0;
+        if(!orders[currentDate][currentVendor][it.name]) orders[currentDate][currentVendor][it.name] = {qty:0, unit:it.unit||'', memo:it.memo||'', updatedAt:0};
+        orders[currentDate][currentVendor][it.name].qty = 0;
+        orders[currentDate][currentVendor][it.name].updatedAt = now;
       }
       scheduleSave();
+      scheduleCloudPush();
       renderItems();
       renderVendors();
       renderTodaySummary(false);
@@ -1473,11 +1705,17 @@ function cutoffDateTimeForDelivery(name, deliveryDateStr){
     // clear day
     $('#clearDayBtn').addEventListener('click', () => {
       ensureDay(currentDate);
+      const now = Date.now();
       for(const v of master.vendors){
         const entries = orders[currentDate][v.name] || {};
-        for(const k of Object.keys(entries)) entries[k].qty = 0;
+        for(const it of v.items){
+          if(!entries[it.name]) entries[it.name] = {qty:0, unit:it.unit||'', memo:it.memo||'', updatedAt:0};
+          entries[it.name].qty = 0;
+          entries[it.name].updatedAt = now;
+        }
       }
       scheduleSave();
+      scheduleCloudPush();
       renderItems();
       renderVendors();
       renderTodaySummary(false);
