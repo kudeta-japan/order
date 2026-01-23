@@ -110,6 +110,7 @@
     .btn.warn{background: rgba(245,158,11,.14); border-color: rgba(245,158,11,.35)}
     .btn.small{padding:8px 10px; border-radius:12px; font-weight:700}
     .list{display:flex; flex-direction:column; gap:10px}
+
     .vendorItem{
       display:flex; justify-content:space-between; align-items:center;
       gap:10px;
@@ -119,6 +120,12 @@
       border-radius: 16px;
       cursor:pointer;
     }
+    /* ★選択中の業者を色変え */
+    .vendorItem.selected{
+      outline: 2px solid rgba(34,197,94,.65);
+      background: rgba(34,197,94,.10);
+    }
+
     .vendorItem .name{font-weight:800}
     .badge{font-size:12px; padding:5px 8px; border-radius:999px; border:1px solid rgba(148,163,184,.18); color:var(--muted)}
     .badge.ok{border-color: rgba(34,197,94,.35); color: rgba(167,243,208,.95)}
@@ -142,6 +149,12 @@
       border:1px solid rgba(148,163,184,.10);
       border-radius: 16px;
     }
+    /* ★発注数が1以上の商品を色変え */
+    .itemRow.hasQty{
+      border-color: rgba(34,197,94,.45);
+      background: rgba(34,197,94,.08);
+    }
+
     .itemRow.sortMode{grid-template-columns: auto 1fr auto; cursor:grab}
     .itemRow.dragOver{outline:2px dashed rgba(34,197,94,.65)}
     .dragHandle{
@@ -156,7 +169,23 @@
     }
     .itemName{font-weight:800}
     .itemMeta{font-size:12px; color:var(--muted); margin-top:2px}
-    .qtyBox{display:flex; align-items:center; gap:8px}
+
+    /* ★2入力（発注・在庫） */
+    .qtyBox{
+      display:flex; align-items:flex-end; gap:10px;
+    }
+    .miniCol{
+      display:flex; flex-direction:column; gap:6px; align-items:center;
+    }
+    .miniLabel{
+      font-size:11px;
+      color: var(--muted);
+      font-weight:900;
+      letter-spacing:.02em;
+      user-select:none;
+    }
+    .miniRow{display:flex; gap:8px; align-items:center}
+
     .qtyBtn{
       width:40px; height:40px;
       border-radius:14px;
@@ -167,7 +196,7 @@
       cursor:pointer;
     }
     .qtyInput{
-      width:72px;
+      width:70px;
       text-align:center;
       padding:10px 10px;
       border-radius:14px;
@@ -176,6 +205,17 @@
       outline:none;
       font-weight:900;
     }
+    .stockInput{
+      width:70px;
+      text-align:center;
+      padding:10px 10px;
+      border-radius:14px;
+      border:1px solid rgba(148,163,184,.18);
+      background: rgba(255,255,255,.85);
+      outline:none;
+      font-weight:900;
+    }
+
     .pill{
       font-size:12px;
       padding:6px 8px;
@@ -678,7 +718,7 @@
 
   // ---------- storage keys ----------
   const KEY_MASTER = 'orderAssist.master.v1';
-  const KEY_ORDERS = 'orderAssist.orders.v1'; // {date: {vendor: {itemName: {qty, unit, memo}}}}
+  const KEY_ORDERS = 'orderAssist.orders.v1'; // {date: {vendor: {itemName: {qty, stock, unit, memo}}}}
   const KEY_CLOUD  = 'orderAssist.cloud.v1';
 
   function getCloud(){
@@ -716,14 +756,14 @@
     u.searchParams.set('action','get');
     u.searchParams.set('storeId', cloud.storeId || 'kudeta');
     u.searchParams.set('date', date);
-    if(cloud.apiKey) u.searchParams.set('key', cloud.apiKey); // ← Apps Script側の想定に合わせる（key）
+    if(cloud.apiKey) u.searchParams.set('key', cloud.apiKey);
     return u.toString();
   }
 
   function buildCloudPostUrl(){
     const u = new URL(cloud.scriptUrl);
     u.searchParams.set('action','save');
-    if(cloud.apiKey) u.searchParams.set('key', cloud.apiKey); // ← key
+    if(cloud.apiKey) u.searchParams.set('key', cloud.apiKey);
     return u.toString();
   }
 
@@ -779,6 +819,7 @@
   function migrateMaster(){
     let changed = false;
     if(!master || !Array.isArray(master.vendors)) return false;
+
     for(const v of master.vendors){
       if(!v.schedule){
         v.schedule = DEFAULT_VENDOR_SCHEDULE[String(v.name||'').trim()] || { deliveryDays:[1,2,3,4,5], cutoffTime:'03:00', cutoffOffsetDays:0, noHolidays:false, blockDates:[] };
@@ -791,6 +832,10 @@
         if(it.memo === undefined) it.memo = '';
       }
     }
+
+    // ★既存ordersにstockが無い場合は、そのままでもOK（参照時に0扱い）
+    //   ただし必要ならここで埋めても良いが、データ量が増えるのでここでは触らない。
+
     if(changed) setMaster(master);
     return changed;
   }
@@ -806,6 +851,13 @@
     ensureDay(date);
     const x = orders[date][vendor][itemName];
     return x ? Number(x.qty || 0) : 0;
+  }
+
+  // ★在庫の取得
+  function getStock(date, vendor, itemName){
+    ensureDay(date);
+    const x = orders[date][vendor][itemName];
+    return x ? Number(x.stock || 0) : 0;
   }
 
   const saveStateEl = $('#saveState');
@@ -831,12 +883,33 @@
     }, 250);
   }
 
+  // ★qty更新（stockは保持）
   function setQty(date, vendor, item){
     ensureDay(date);
     const now = Date.now();
-    if(!orders[date][vendor][item.name]) orders[date][vendor][item.name] = {qty:0, unit:item.unit, memo:item.memo, updatedAt: now};
+    if(!orders[date][vendor][item.name]){
+      orders[date][vendor][item.name] = {qty:0, stock:0, unit:item.unit, memo:item.memo, updatedAt: now};
+    }
     const obj = orders[date][vendor][item.name];
     obj.qty = Number(item.qty || 0);
+    obj.stock = Number(obj.stock || 0);
+    obj.unit = item.unit || '';
+    obj.memo = item.memo || '';
+    obj.updatedAt = now;
+    scheduleSave();
+    scheduleCloudPush();
+  }
+
+  // ★stock更新（qtyは保持）
+  function setStock(date, vendor, item){
+    ensureDay(date);
+    const now = Date.now();
+    if(!orders[date][vendor][item.name]){
+      orders[date][vendor][item.name] = {qty:0, stock:0, unit:item.unit, memo:item.memo, updatedAt: now};
+    }
+    const obj = orders[date][vendor][item.name];
+    obj.stock = Number(item.stock || 0);
+    obj.qty = Number(obj.qty || 0);
     obj.unit = item.unit || '';
     obj.memo = item.memo || '';
     obj.updatedAt = now;
@@ -854,10 +927,14 @@
       for(const it of v.items){
         const rec = items[it.name];
         const qty = rec ? Number(rec.qty || 0) : 0;
-        if(qty !== 0){
+        const stock = rec ? Number(rec.stock || 0) : 0;
+
+        // ★発注 or 在庫 があるものだけ送る（無駄に肥大化させない）
+        if(qty !== 0 || stock !== 0){
           if(!out[vname]) out[vname] = {};
           out[vname][it.name] = {
             qty,
+            stock,
             unit: String(it.unit || rec?.unit || ''),
             memo: String(it.memo || rec?.memo || ''),
             updatedAt: Number(rec?.updatedAt || Date.now())
@@ -870,26 +947,33 @@
 
   function applyCloudDay(date, cloudOrders){
     ensureDay(date);
-    // reset all to 0
+
+    // reset all to 0（qty/stock両方）
     for(const v of master.vendors){
       const vname = v.name;
       if(!orders[date][vname]) orders[date][vname] = {};
       for(const it of v.items){
-        if(!orders[date][vname][it.name]) orders[date][vname][it.name] = {qty:0, unit:it.unit||'', memo:it.memo||'', updatedAt:0};
+        if(!orders[date][vname][it.name]){
+          orders[date][vname][it.name] = {qty:0, stock:0, unit:it.unit||'', memo:it.memo||'', updatedAt:0};
+        }
         orders[date][vname][it.name].qty = 0;
+        orders[date][vname][it.name].stock = 0;
       }
     }
+
     // apply cloud
     for(const [vname, items] of Object.entries(cloudOrders || {})){
       if(!orders[date][vname]) orders[date][vname] = {};
       for(const [iname, rec] of Object.entries(items || {})){
-        if(!orders[date][vname][iname]) orders[date][vname][iname] = {qty:0, unit:'', memo:'', updatedAt:0};
+        if(!orders[date][vname][iname]) orders[date][vname][iname] = {qty:0, stock:0, unit:'', memo:'', updatedAt:0};
         orders[date][vname][iname].qty = Number(rec.qty || 0);
+        orders[date][vname][iname].stock = Number(rec.stock || 0);
         orders[date][vname][iname].unit = String(rec.unit || orders[date][vname][iname].unit || '');
         orders[date][vname][iname].memo = String(rec.memo || orders[date][vname][iname].memo || '');
         orders[date][vname][iname].updatedAt = Number(rec.updatedAt || Date.now());
       }
     }
+
     setOrders(orders);
     markSaved();
   }
@@ -946,9 +1030,7 @@
     }
   }
 
-  // ★重複宣言してたのを1つに統一（これがボタン無反応の最大原因）
   let cloudPushTimer = null;
-
   function scheduleCloudPush(){
     if(!cloudReady()) return;
     if(!cloud.autoPush) return;
@@ -1005,7 +1087,7 @@
     master.vendors.forEach(v => {
       const count = Object.values((day[v.name]||{})).reduce((acc, it) => acc + (Number(it.qty||0)>0 ? 1 : 0), 0);
       const el = document.createElement('div');
-      el.className = 'vendorItem';
+      el.className = 'vendorItem' + (v.name === currentVendor ? ' selected' : '');
       el.innerHTML = `
         <div>
           <div class="name">${escapeHtml(v.name)}</div>
@@ -1022,6 +1104,7 @@
         currentVendor = v.name;
         $('#vendorTitle').textContent = `商品：${v.name}`;
         $('#itemSearch').value = '';
+        renderVendors();
         renderItems();
       });
       list.appendChild(el);
@@ -1030,6 +1113,7 @@
     if(!currentVendor && master.vendors.length){
       currentVendor = master.vendors[0].name;
       $('#vendorTitle').textContent = `商品：${currentVendor}`;
+      renderVendors();
       renderItems();
     }
   }
@@ -1120,10 +1204,19 @@
       return;
     }
 
+    const clamp = (n) => {
+      if(!Number.isFinite(n) || n<0) return 0;
+      if(n>9999) return 9999;
+      return Math.round(n);
+    };
+
     for(const it of items){
       const qty = getQty(currentDate, v.name, it.name);
+      const stock = getStock(currentDate, v.name, it.name);
+
       const row = document.createElement('div');
-      row.className = 'itemRow';
+      row.className = 'itemRow' + (qty >= 1 ? ' hasQty' : '');
+
       row.innerHTML = `
         <div>
           <div class="itemName">${escapeHtml(it.name)}</div>
@@ -1133,39 +1226,74 @@
             ${it.idealStock!=='' && it.idealStock!=null && String(it.idealStock).trim()!=='' ? `<span class="pill">適正：${escapeHtml(it.idealStock)}</span>` : `<span class="pill">適正：未設定</span>`}
           </div>
         </div>
+
         <div class="qtyBox">
           <button class="btn small" data-act="editItem" title="商品設定" type="button">⚙</button>
-          <button class="qtyBtn" data-delta="-1" type="button">−</button>
-          <input class="qtyInput" inputmode="numeric" pattern="[0-9]*" value="${qty}" />
-          <button class="qtyBtn" data-delta="+1" type="button">＋</button>
+
+          <div class="miniCol">
+            <div class="miniLabel">発注</div>
+            <div class="miniRow">
+              <button class="qtyBtn" data-delta="-1" data-kind="qty" type="button">−</button>
+              <input class="qtyInput" data-kind="qty" inputmode="numeric" pattern="[0-9]*" value="${qty}" />
+              <button class="qtyBtn" data-delta="+1" data-kind="qty" type="button">＋</button>
+            </div>
+          </div>
+
+          <div class="miniCol">
+            <div class="miniLabel">在庫</div>
+            <div class="miniRow">
+              <button class="qtyBtn" data-delta="-1" data-kind="stock" type="button">−</button>
+              <input class="stockInput" data-kind="stock" inputmode="numeric" pattern="[0-9]*" value="${stock}" />
+              <button class="qtyBtn" data-delta="+1" data-kind="stock" type="button">＋</button>
+            </div>
+          </div>
         </div>
       `;
 
-      const input = row.querySelector('.qtyInput');
-      const minus = row.querySelectorAll('.qtyBtn')[0];
-      const plus = row.querySelectorAll('.qtyBtn')[1];
+      const qtyInput = row.querySelector('input[data-kind="qty"]');
+      const stockInput = row.querySelector('input[data-kind="stock"]');
 
-      const clamp = (n) => {
-        if(!Number.isFinite(n) || n<0) return 0;
-        if(n>9999) return 9999;
-        return Math.round(n);
-      };
-
-      function commit(n){
+      function commitQty(n){
         const newQty = clamp(n);
-        input.value = String(newQty);
+        qtyInput.value = String(newQty);
         setQty(currentDate, v.name, {...it, qty:newQty});
+        row.classList.toggle('hasQty', newQty >= 1);
         renderVendors();
         renderTodaySummary(false);
       }
 
-      minus.addEventListener('click', () => commit(Number(input.value||0) - 1));
-      plus.addEventListener('click', () => commit(Number(input.value||0) + 1));
-      input.addEventListener('change', () => {
-        const n = Number(String(input.value).replace(/[^0-9]/g,''));
-        commit(n);
+      function commitStock(n){
+        const newStock = clamp(n);
+        stockInput.value = String(newStock);
+        setStock(currentDate, v.name, {...it, stock:newStock});
+        // 在庫は色変更なし（必要なら後で追加できる）
+        renderVendors();
+        renderTodaySummary(false);
+      }
+
+      row.querySelectorAll('button.qtyBtn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const kind = btn.getAttribute('data-kind');
+          const delta = Number(btn.getAttribute('data-delta') || 0);
+          if(kind === 'qty'){
+            commitQty(Number(qtyInput.value||0) + delta);
+          }else{
+            commitStock(Number(stockInput.value||0) + delta);
+          }
+        });
       });
-      input.addEventListener('dblclick', () => commit(0));
+
+      qtyInput.addEventListener('change', () => {
+        const n = Number(String(qtyInput.value).replace(/[^0-9]/g,''));
+        commitQty(n);
+      });
+      qtyInput.addEventListener('dblclick', () => commitQty(0));
+
+      stockInput.addEventListener('change', () => {
+        const n = Number(String(stockInput.value).replace(/[^0-9]/g,''));
+        commitStock(n);
+      });
+      stockInput.addEventListener('dblclick', () => commitStock(0));
 
       const editBtn = row.querySelector('[data-act="editItem"]');
       if(editBtn){
@@ -1320,7 +1448,7 @@
       `;
 
       const ta = card.querySelector('textarea');
-      ta.value = txt; // ← escapeせずそのまま表示
+      ta.value = txt;
 
       card.querySelector('[data-act="copy"]').addEventListener('click', () => copyToClipboard(txt));
       card.querySelector('[data-act="txt"]').addEventListener('click', () => downloadText(`${currentDate}_${v.name}_発注.txt`, txt));
@@ -1423,10 +1551,12 @@
       const n = Math.max(0, Math.min(999999, Math.round(Number(raw))));
       it.idealStock = Number.isFinite(n) ? String(n) : '';
     }
+
     for(const d of Object.keys(orders)){
       const e = orders[d]?.[v.name]?.[it.name];
       if(e){ e.unit = it.unit || ''; e.memo = it.memo || ''; }
     }
+
     setMaster(master);
     scheduleSave();
     renderVendors();
@@ -1652,7 +1782,7 @@
     // to today
     $('#toTodayBtn').addEventListener('click', () => setTab('today'));
 
-    // clear vendor
+    // clear vendor（発注/在庫どっちも0に）
     $('#clearVendorBtn').addEventListener('click', () => {
       if(!currentVendor) return;
       ensureDay(currentDate);
@@ -1660,8 +1790,9 @@
       if(!v) return;
       const now = Date.now();
       for(const it of v.items){
-        if(!orders[currentDate][currentVendor][it.name]) orders[currentDate][currentVendor][it.name] = {qty:0, unit:it.unit||'', memo:it.memo||'', updatedAt:0};
+        if(!orders[currentDate][currentVendor][it.name]) orders[currentDate][currentVendor][it.name] = {qty:0, stock:0, unit:it.unit||'', memo:it.memo||'', updatedAt:0};
         orders[currentDate][currentVendor][it.name].qty = 0;
+        orders[currentDate][currentVendor][it.name].stock = 0;
         orders[currentDate][currentVendor][it.name].updatedAt = now;
       }
       scheduleSave();
@@ -1672,15 +1803,16 @@
       toast('この業者を0にしました');
     });
 
-    // clear day
+    // clear day（発注/在庫どっちも0に）
     $('#clearDayBtn').addEventListener('click', () => {
       ensureDay(currentDate);
       const now = Date.now();
       for(const v of master.vendors){
         const entries = orders[currentDate][v.name] || {};
         for(const it of v.items){
-          if(!entries[it.name]) entries[it.name] = {qty:0, unit:it.unit||'', memo:it.memo||'', updatedAt:0};
+          if(!entries[it.name]) entries[it.name] = {qty:0, stock:0, unit:it.unit||'', memo:it.memo||'', updatedAt:0};
           entries[it.name].qty = 0;
+          entries[it.name].stock = 0;
           entries[it.name].updatedAt = now;
         }
       }
