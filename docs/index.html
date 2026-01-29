@@ -3,118 +3,49 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>発注アシスト Pro</title>
+  <title>発注アシスト Pro (修正版)</title>
   <style>
     :root {
-      --primary: #16a34a;
-      --primary-light: #dcfce7;
-      --bg: #f3f4f6;
-      --card: #ffffff;
-      --text: #1f2937;
-      --muted: #6b7280;
-      --danger: #ef4444;
-      --warn: #f59e0b;
-      --shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+      --primary: #16a34a; --bg: #f3f4f6; --card: #ffffff; --text: #1f2937; --muted: #6b7280; --warn: #f59e0b;
     }
-
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    body {
-      margin: 0; font-family: 'Hiragino Sans', sans-serif;
-      background: var(--bg); color: var(--text);
-      padding-bottom: 80px; /* ナビ用余白 */
-      overscroll-behavior: none;
-    }
-
-    /* ヘッダー: 状態表示固定 */
+    body { margin: 0; font-family: sans-serif; background: var(--bg); color: var(--text); padding-bottom: 80px; overscroll-behavior: none; }
     header {
-      position: sticky; top: 0; z-index: 100;
-      background: rgba(255,255,255,0.9); backdrop-filter: blur(10px);
-      padding: 12px 16px; border-bottom: 1px solid #e5e7eb;
+      position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,0.9);
+      backdrop-filter: blur(10px); padding: 12px 16px; border-bottom: 1px solid #e5e7eb;
       display: flex; justify-content: space-between; align-items: center;
     }
-
-    .date-badge {
-      display: flex; align-items: center; gap: 8px;
-      background: #fff; padding: 6px 12px; border-radius: 999px;
-      border: 1px solid #ddd; font-weight: bold;
-    }
-
-    .status-dot {
-      width: 8px; height: 8px; border-radius: 50%; background: #ccc;
-      display: inline-block;
-    }
-    .status-online { background: var(--primary); box-shadow: 0 0 8px var(--primary); }
-    .status-syncing { background: var(--warn); animation: blink 1s infinite; }
-
-    /* メインコンテンツ */
-    main { padding: 12px; max-width: 800px; margin: 0 auto; }
-    .view-title { font-size: 1.1em; font-weight: 800; margin: 0 0 12px 4px; display: flex; align-items: center; gap: 8px; }
-
-    /* 業者リスト（横スクロール） */
-    .vendor-selector {
-      display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 16px;
-      scrollbar-width: none;
-    }
-    .vendor-selector::-webkit-scrollbar { display: none; }
-    .vendor-chip {
-      white-space: nowrap; padding: 10px 20px; background: #fff;
-      border-radius: 999px; border: 1px solid #e5e7eb; font-weight: bold; color: var(--muted);
-    }
-    .vendor-chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-
-    /* 商品カード */
-    .item-card {
-      background: var(--card); border-radius: 16px; padding: 16px;
-      margin-bottom: 12px; box-shadow: var(--shadow);
-      display: grid; grid-template-columns: 1fr auto; align-items: center;
-      transition: transform 0.1s;
-    }
-    .item-card.has-qty { border-left: 6px solid var(--primary); }
-    .item-card.shortage { border-left: 6px solid var(--warn); background: #fffcf5; }
-
-    .item-info .name { font-weight: 800; font-size: 1.1em; margin-bottom: 4px; }
-    .item-info .meta { font-size: 0.85em; color: var(--muted); }
-
-    .counter { display: flex; align-items: center; gap: 4px; background: #f9fafb; padding: 4px; border-radius: 12px; }
-    .btn-qty {
-      width: 44px; height: 44px; border-radius: 10px; border: none;
-      background: #fff; font-size: 1.5em; font-weight: bold; cursor: pointer;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-    .qty-display { width: 50px; text-align: center; font-size: 1.2em; font-weight: 900; }
-
-    /* 在庫入力（サブ） */
-    .stock-input-wrap { display: flex; align-items: center; gap: 4px; margin-top: 8px; font-size: 0.9em; color: var(--muted); }
-    .stock-field { width: 60px; border: 1px solid #ddd; border-radius: 6px; padding: 4px; text-align: center; font-weight: bold; }
-
-    /* ボトムナビゲーション */
-    nav {
-      position: fixed; bottom: 0; left: 0; right: 0;
-      background: #fff; border-top: 1px solid #e5e7eb;
-      display: grid; grid-template-columns: repeat(3, 1fr); padding: 10px 0 25px;
-    }
-    .nav-item {
-      display: flex; flex-direction: column; align-items: center;
-      gap: 4px; color: var(--muted); cursor: pointer; font-size: 0.75em; font-weight: bold;
-    }
-    .nav-item.active { color: var(--primary); }
-    .nav-icon { font-size: 1.5em; }
-
+    .date-badge { background: #fff; padding: 6px 12px; border-radius: 999px; border: 1px solid #ddd; display: flex; align-items: center; }
+    #dateInput { border: none; font-size: 1em; font-weight: bold; outline: none; background: transparent; }
+    .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #ccc; margin-right: 5px; }
+    .online { background: var(--primary); }
+    .syncing { background: var(--warn); animation: blink 1s infinite; }
     @keyframes blink { 50% { opacity: 0.3; } }
 
-    /* 設定画面用入力 */
-    .form-group { margin-bottom: 16px; }
-    .form-group label { display: block; font-size: 0.8em; font-weight: bold; color: var(--muted); margin-bottom: 4px; }
-    .form-group input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; font-size: 1em; }
+    main { padding: 12px; max-width: 800px; margin: 0 auto; }
+    .vendor-selector { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 16px; }
+    .vendor-chip { white-space: nowrap; padding: 10px 20px; background: #fff; border-radius: 999px; border: 1px solid #e5e7eb; font-weight: bold; color: var(--muted); cursor: pointer; }
+    .vendor-chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+    .item-card { background: var(--card); border-radius: 16px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: grid; grid-template-columns: 1fr auto; align-items: center; }
+    .item-card.has-qty { border-left: 6px solid var(--primary); }
+    .item-info .name { font-weight: 800; font-size: 1.1em; }
+    .counter { display: flex; align-items: center; gap: 8px; background: #f9fafb; padding: 6px; border-radius: 12px; }
+    .btn-qty { width: 44px; height: 44px; border-radius: 10px; border: none; background: #fff; font-size: 1.5em; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1); cursor: pointer; }
+    .qty-display { width: 40px; text-align: center; font-size: 1.2em; font-weight: 900; }
+
+    nav { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #e5e7eb; display: grid; grid-template-columns: repeat(3, 1fr); padding: 10px 0 25px; }
+    .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--muted); cursor: pointer; font-size: 0.8em; font-weight: bold; }
+    .nav-item.active { color: var(--primary); }
   </style>
 </head>
 <body>
 
 <header>
   <div class="date-badge">
-    <input type="date" id="dateInput" onchange="handleDateChange()" style="border:none; font-family:inherit; font-size:1em; outline:none;">
+    <input type="date" id="dateInput">
   </div>
-  <div id="syncIndicator" class="row" style="gap:6px; font-size:0.8em; font-weight:bold; color:var(--muted)">
+  <div style="display: flex; align-items: center; font-size: 0.8em; font-weight: bold;">
     <span class="status-dot" id="dot"></span>
     <span id="syncText">READY</span>
   </div>
@@ -123,84 +54,78 @@
 <main>
   <div id="view-vendors" class="view">
     <div class="vendor-selector" id="vendorSelector"></div>
-    <div class="view-title" id="vendorTitle">業者を選択してください</div>
     <div id="itemList"></div>
   </div>
 
   <div id="view-today" class="view" style="display:none">
-    <div class="view-title">📦 本日の確定発注</div>
-    <div id="todaySummary" class="card"></div>
-    <button class="btn-qty" style="width:100%; margin-top:12px; font-size:1em; background:var(--primary); color:#fff;" onclick="copySummary()">内容をコピー</button>
+    <div style="background:#fff; padding:16px; border-radius:16px;" id="todaySummary"></div>
   </div>
 
   <div id="view-settings" class="view" style="display:none">
-    <div class="view-title">⚙️ 設定</div>
-    <div class="card" style="background:#fff; padding:16px; border-radius:16px;">
-      <div class="form-group">
-        <label>GAS WebアプリURL</label>
-        <input type="text" id="gasUrl" placeholder="https://script.google.com/...">
-      </div>
-      <div class="form-group">
-        <label>店舗ID</label>
-        <input type="text" id="storeId" placeholder="例: Kudeta_Main">
-      </div>
-      <button class="btn-qty" style="width:100%; font-size:1em; background:var(--text); color:#fff;" onclick="saveSettings()">設定を保存</button>
+    <div style="background:#fff; padding:16px; border-radius:16px;">
+      <label style="font-size: 0.8em; font-weight: bold;">GAS WebアプリURL</label>
+      <input type="text" id="gasUrl" style="width:100%; padding:10px; margin-top:5px; border-radius:8px; border:1px solid #ddd;">
+      <button onclick="saveSettings()" style="width:100%; margin-top:15px; padding:12px; background:var(--text); color:#fff; border-radius:8px; border:none; font-weight:bold;">設定を保存</button>
     </div>
   </div>
 </main>
 
 <nav>
-  <div class="nav-item active" onclick="switchTab('vendors', this)">
-    <span class="nav-icon">🛒</span><span>発注入力</span>
-  </div>
-  <div class="nav-item" onclick="switchTab('today', this)">
-    <span class="nav-icon">📋</span><span>リスト</span>
-  </div>
-  <div class="nav-item" onclick="switchTab('settings', this)">
-    <span class="nav-icon">⚙️</span><span>設定</span>
-  </div>
+  <div class="nav-item active" onclick="switchTab('vendors', this)"><span>🛒 発注</span></div>
+  <div class="nav-item" onclick="switchTab('today', this)"><span>📋 リスト</span></div>
+  <div class="nav-item" onclick="switchTab('settings', this)"><span>⚙️ 設定</span></div>
 </nav>
 
 <script>
-  // --- 初期データ & マスター ---
   let orders = {}; 
   let currentVendor = "";
   let master = {
     vendors: [
-      {name: "大光", items: [{name: "バター", unit: "kg", ideal: 5}, {name: "牛乳", unit: "本", ideal: 10}]},
-      {name: "高瀬", items: [{name: "キャベツ", unit: "玉", ideal: 3}, {name: "レタス", unit: "玉", ideal: 2}]},
-      {name: "安田青果", items: [{name: "玉ねぎ", unit: "kg", ideal: 10}, {name: "人参", unit: "kg", ideal: 5}]},
-      {name: "マルト", items: [{name: "卵", unit: "パック", ideal: 20}]}
+      {name: "大光", items: [{name: "バター", unit: "kg"}, {name: "牛乳", unit: "本"}]},
+      {name: "高瀬", items: [{name: "キャベツ", unit: "玉"}, {name: "レタス", unit: "玉"}]},
+      {name: "安田青果", items: [{name: "玉ねぎ", unit: "kg"}]}
     ]
   };
 
-  let config = JSON.parse(localStorage.getItem('orderConfig_v2') || '{"gasUrl":"","storeId":""}');
+  let config = JSON.parse(localStorage.getItem('orderConfig_v3') || '{"gasUrl":"","storeId":"default"}');
 
-  // --- 起動処理 ---
+  // --- 初期起動 ---
   window.onload = async () => {
     const today = new Date().toISOString().split('T')[0];
-    document.getElementById('dateInput').value = today;
+    const dateInput = document.getElementById('dateInput');
+    dateInput.value = today;
     document.getElementById('gasUrl').value = config.gasUrl;
-    document.getElementById('storeId').value = config.storeId;
-    
+
+    // 日付変更イベントをバインド
+    dateInput.addEventListener('change', handleDateChange);
+
     loadLocalOrders();
-    if(config.gasUrl) await pullFromCloud(); // 起動時に最新取得
+    if(config.gasUrl) await pullFromCloud(); 
     renderVendorSelector();
     selectVendor(master.vendors[0].name);
   };
 
-  // --- データ処理コア ---
-  function loadLocalOrders() {
-    const saved = localStorage.getItem('orders_v2');
-    orders = saved ? JSON.parse(saved) : {};
-  }
-
+  // --- 日付変更時のコアロジック (ここが修正の肝) ---
   async function handleDateChange() {
-    setSyncStatus('syncing', '更新中...');
-    loadLocalOrders(); 
-    if(config.gasUrl) await pullFromCloud(); // 日付を変えたら即クラウド確認
+    setSyncStatus('syncing', 'データ読込中...');
+    const newDate = document.getElementById('dateInput').value;
+    
+    // 1. まずメモリ上の orders ではなく、最新のローカルストレージを読み直す
+    loadLocalOrders();
+    
+    // 2. クラウド設定があるなら、その日付のデータを取得
+    if(config.gasUrl) {
+      await pullFromCloud(); 
+    }
+    
+    // 3. 描画
     renderItems();
     if(document.getElementById('view-today').style.display !== 'none') renderTodaySummary();
+  }
+
+  function loadLocalOrders() {
+    const saved = localStorage.getItem('orders_v3');
+    orders = saved ? JSON.parse(saved) : {};
   }
 
   async function pullFromCloud() {
@@ -209,16 +134,19 @@
     try {
       const res = await fetch(`${config.gasUrl}?date=${date}&storeId=${config.storeId}`);
       const result = await res.json();
+      
+      // 重要：クラウドにデータがある場合のみマージ。ない場合は上書きせずローカルを維持
       if(result.data && result.data !== "{}" && result.data !== "") {
         orders[date] = JSON.parse(result.data);
-        localStorage.setItem('orders_v2', JSON.stringify(orders));
-        setSyncStatus('online', 'CLOUD');
+        localStorage.setItem('orders_v3', JSON.stringify(orders));
+        setSyncStatus('online', '最新同期済');
       } else {
-        setSyncStatus('online', 'LOCAL (NO CLOUD DATA)');
+        setSyncStatus('online', '新規データ入力可');
       }
     } catch(e) {
-      setSyncStatus('error', 'OFFLINE');
+      setSyncStatus('error', 'オフライン表示');
     }
+    renderItems();
   }
 
   async function syncToCloud() {
@@ -229,18 +157,17 @@
       await fetch(config.gasUrl, {
         method: 'POST',
         body: JSON.stringify({
-          date: date,
-          storeId: config.storeId,
+          date: date, storeId: config.storeId,
           data: JSON.stringify(orders[date] || {})
         })
       });
-      setSyncStatus('online', 'CLOUD SAVED');
+      setSyncStatus('online', '保存完了');
     } catch(e) {
-      setSyncStatus('error', 'SAVE ERROR');
+      setSyncStatus('error', '保存失敗');
     }
   }
 
-  // --- UI描画 ---
+  // --- 描画・操作 ---
   function renderVendorSelector() {
     const container = document.getElementById('vendorSelector');
     container.innerHTML = master.vendors.map(v => `
@@ -251,7 +178,6 @@
   function selectVendor(name) {
     currentVendor = name;
     renderVendorSelector();
-    document.getElementById('vendorTitle').innerText = `🏢 ${name} の発注`;
     renderItems();
   }
 
@@ -259,22 +185,15 @@
     const date = document.getElementById('dateInput').value;
     const vendor = master.vendors.find(v => v.name === currentVendor);
     const container = document.getElementById('itemList');
-    
-    if(!vendor) return container.innerHTML = "";
+    if(!vendor) return;
 
     container.innerHTML = vendor.items.map(item => {
       const data = (orders[date]?.[currentVendor]?.[item.name]) || {qty:0, stock:0};
-      const isShort = data.stock < item.ideal && data.qty === 0;
-
       return `
-        <div class="item-card ${data.qty > 0 ? 'has-qty' : ''} ${isShort ? 'shortage' : ''}">
+        <div class="item-card ${data.qty > 0 ? 'has-qty' : ''}">
           <div class="item-info">
             <div class="name">${item.name}</div>
-            <div class="meta">目安: ${item.ideal}${item.unit}</div>
-            <div class="stock-input-wrap">
-              在庫: <input type="number" class="stock-field" value="${data.stock}" 
-                onchange="updateVal('${item.name}', 'stock', this.value)"> ${item.unit}
-            </div>
+            <div style="font-size:0.8em; color:var(--muted)">単位: ${item.unit}</div>
           </div>
           <div class="counter">
             <button class="btn-qty" onclick="changeQty('${item.name}', -1)">-</button>
@@ -292,45 +211,13 @@
     if(!orders[date][currentVendor]) orders[date][currentVendor] = {};
     if(!orders[date][currentVendor][itemName]) orders[date][currentVendor][itemName] = {qty:0, stock:0};
     
-    let current = orders[date][currentVendor][itemName].qty;
-    orders[date][currentVendor][itemName].qty = Math.max(0, current + delta);
+    orders[date][currentVendor][itemName].qty = Math.max(0, orders[date][currentVendor][itemName].qty + delta);
     
-    saveAndSync();
+    // 保存と同期
+    localStorage.setItem('orders_v3', JSON.stringify(orders));
     renderItems();
-  }
-
-  function updateVal(itemName, field, val) {
-    const date = document.getElementById('dateInput').value;
-    if(!orders[date]) orders[date] = {};
-    if(!orders[date][currentVendor]) orders[date][currentVendor] = {};
-    if(!orders[date][currentVendor][itemName]) orders[date][currentVendor][itemName] = {qty:0, stock:0};
-    
-    orders[date][currentVendor][itemName][field] = Number(val);
-    saveAndSync();
-    renderItems();
-  }
-
-  function saveAndSync() {
-    localStorage.setItem('orders_v2', JSON.stringify(orders));
     clearTimeout(window.syncTimer);
-    window.syncTimer = setTimeout(syncToCloud, 1500); // 1.5秒後
-  }
-
-  // --- サブ画面 ---
-  function renderTodaySummary() {
-    const date = document.getElementById('dateInput').value;
-    const dayData = orders[date] || {};
-    let html = "";
-    for(let v in dayData) {
-      let items = Object.entries(dayData[v]).filter(([n, d]) => d.qty > 0);
-      if(items.length > 0) {
-        html += `<div style="margin-bottom:12px; border-bottom:1px solid #eee; padding-bottom:8px;">
-          <b style="color:var(--primary)">■ ${v}</b><br>
-          ${items.map(([n, d]) => `・${n} : ${d.qty}`).join('<br>')}
-        </div>`;
-      }
-    }
-    document.getElementById('todaySummary').innerHTML = html || "発注データがありません";
+    window.syncTimer = setTimeout(syncToCloud, 2000);
   }
 
   function switchTab(tabId, el) {
@@ -341,25 +228,31 @@
     if(tabId === 'today') renderTodaySummary();
   }
 
+  function renderTodaySummary() {
+    const date = document.getElementById('dateInput').value;
+    const dayData = orders[date] || {};
+    let html = `<h3>${date} の発注</h3>`;
+    for(let v in dayData) {
+      let items = Object.entries(dayData[v]).filter(([n, d]) => d.qty > 0);
+      if(items.length > 0) {
+        html += `<p><b>■ ${v}</b><br>${items.map(([n, d]) => `・${n}: ${d.qty}`).join('<br>')}</p>`;
+      }
+    }
+    document.getElementById('todaySummary').innerHTML = html || "発注なし";
+  }
+
   function setSyncStatus(type, text) {
     const dot = document.getElementById('dot');
     const txt = document.getElementById('syncText');
     txt.innerText = text;
-    dot.className = 'status-dot ' + (type === 'syncing' ? 'status-syncing' : (type === 'online' ? 'status-online' : ''));
+    dot.className = 'status-dot ' + (type === 'syncing' ? 'syncing' : (type === 'online' ? 'online' : ''));
   }
 
   function saveSettings() {
     config.gasUrl = document.getElementById('gasUrl').value;
-    config.storeId = document.getElementById('storeId').value;
-    localStorage.setItem('orderConfig_v2', JSON.stringify(config));
-    alert('設定完了！最新データを取得します。');
+    localStorage.setItem('orderConfig_v3', JSON.stringify(config));
+    alert('設定を保存しました。');
     pullFromCloud();
-  }
-
-  async function copySummary() {
-    const text = document.getElementById('todaySummary').innerText;
-    await navigator.clipboard.writeText(text);
-    alert('コピーしました');
   }
 </script>
 </body>
