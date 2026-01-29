@@ -2,16 +2,12 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#ffffff" />
-  <title>発注アシスト</title>
-  <link rel="manifest" href="manifest.json" />
-  <link rel="icon" href="icons/icon-192.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>発注アシスト Cloud</title>
   <style>
     :root{
       --bg:#f6f7fb;
       --card:#ffffff;
-      --card2:#f9fafb;
       --border:#e5e7eb;
       --text:#111827;
       --muted:#6b7280;
@@ -21,1913 +17,288 @@
       --shadow: 0 10px 30px rgba(17,24,39,.10);
       --r:18px;
     }
-    *{box-sizing:border-box}
+    *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
     body{
-      margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
-      background: radial-gradient(1100px 600px at 20% -10%, rgba(34,197,94,.10), transparent 60%),
-                  radial-gradient(900px 500px at 90% 0%, rgba(59,130,246,.08), transparent 55%),
-                  var(--bg);
-      color:var(--text);
+      margin:0; font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg); color:var(--text);
+      overscroll-behavior: none; /* iPadの引っ張り更新防止 */
     }
     header{
       position:sticky; top:0; z-index:20;
-      padding:14px 14px 10px;
-      background: rgba(255,255,255,.92);
-      backdrop-filter: blur(10px);
-      border-bottom:1px solid rgba(148,163,184,.15);
+      padding:12px; background: rgba(255,255,255,.92);
+      backdrop-filter: blur(10px); border-bottom:1px solid var(--border);
     }
     .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
-    .title{font-weight:800; letter-spacing:.02em; font-size:18px}
     .chip{
-      padding:8px 10px; border:1px solid rgba(148,163,184,.18);
-      background: rgba(255,255,255,.92);
-      border-radius:999px;
-      display:flex; gap:8px; align-items:center;
+      padding:6px 10px; border:1px solid var(--border);
+      background: #fff; border-radius:999px; display:flex; gap:8px; align-items:center;
     }
-    input, button, textarea, select{font: inherit; color: inherit;}
-    button:disabled, input:disabled{opacity:.55; cursor:not-allowed}
-    .date{
-      padding:8px 10px;
-      border-radius:12px;
-      border:1px solid var(--border);
-      background:#fff;
-      color:var(--text);
-      outline:none;
-    }
-    .iconBtn{
-      width:36px; height:36px;
-      border-radius:12px;
-      border:1px solid var(--border);
-      background:#fff;
-      cursor:pointer;
-      font-weight:900;
-      line-height:1;
-      display:flex; align-items:center; justify-content:center;
-      user-select:none;
-    }
-    .iconBtn:active{transform: translateY(1px)}
-    .tabs{
-      display:grid; grid-template-columns: repeat(4, 1fr);
-      gap:8px; margin-top:10px;
-    }
+    .tabs{display:grid; grid-template-columns: repeat(4, 1fr); gap:6px; margin-top:10px;}
     .tab{
-      border:1px solid rgba(148,163,184,.18);
-      background: rgba(255,255,255,.85);
-      padding:10px 10px;
-      border-radius: 999px;
-      cursor:pointer;
-      user-select:none;
-      text-align:center;
-      font-weight:700;
-      color: var(--muted);
+      padding:10px; border-radius: 999px; cursor:pointer; text-align:center;
+      font-weight:700; color: var(--muted); border:1px solid transparent;
     }
-    .tab.active{background: rgba(34,197,94,.14); border-color: rgba(34,197,94,.35); color: var(--text)}
-    main{padding:14px; max-width:1050px; margin:0 auto}
-    .grid{display:grid; gap:12px}
-    .grid.cols2{grid-template-columns: 1fr}
-    @media (min-width: 860px){.grid.cols2{grid-template-columns: 360px 1fr}}
-    .card{
-      background: rgba(255,255,255,.95);
-      border:1px solid rgba(148,163,184,.12);
-      border-radius: var(--r);
-      padding:12px;
-      box-shadow: var(--shadow);
-    }
-    .card h2{margin:0 0 8px; font-size:16px}
-    .muted{color:var(--muted)}
-    .btn{
-      border:1px solid rgba(148,163,184,.18);
-      background: rgba(255,255,255,.85);
-      padding:10px 12px;
-      border-radius: 14px;
-      cursor:pointer;
-      user-select:none;
-      font-weight:700;
-    }
-    .btn:active{transform: translateY(1px)}
-    .btn.primary{background: rgba(34,197,94,.16); border-color: rgba(34,197,94,.40)}
-    .btn.danger{background: rgba(239,68,68,.14); border-color: rgba(239,68,68,.35)}
-    .btn.warn{background: rgba(245,158,11,.14); border-color: rgba(245,158,11,.35)}
-    .btn.small{padding:8px 10px; border-radius:12px; font-weight:700}
-    .list{display:flex; flex-direction:column; gap:10px}
-
-    .vendorItem{
-      display:flex; justify-content:space-between; align-items:center;
-      gap:10px;
-      padding:12px;
-      background: rgba(249,250,251,.95);
-      border:1px solid rgba(148,163,184,.12);
-      border-radius: 16px;
-      cursor:pointer;
-    }
-    /* ★選択中の業者を色変え */
-    .vendorItem.selected{
-      outline: 2px solid rgba(34,197,94,.65);
-      background: rgba(34,197,94,.10);
-    }
-
-    .vendorItem .name{font-weight:800}
-    .badge{font-size:12px; padding:5px 8px; border-radius:999px; border:1px solid rgba(148,163,184,.18); color:var(--muted)}
-    .badge.ok{border-color: rgba(34,197,94,.35); color: rgba(167,243,208,.95)}
-    .toolbar{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:8px 0 12px}
-    .search{
-      flex:1;
-      min-width: 220px;
-      padding:10px 12px;
-      border-radius:14px;
-      border:1px solid rgba(148,163,184,.18);
-      background: rgba(255,255,255,.85);
-      outline:none;
-    }
+    .tab.active{background: rgba(34,197,94,.1); border-color: var(--accent); color: var(--accent)}
+    
+    main{padding:12px; max-width:1100px; margin:0 auto}
+    .card{background:#fff; border-radius:var(--r); padding:16px; box-shadow:var(--shadow); margin-bottom:12px;}
+    
+    /* 商品行のスタイル */
     .itemRow{
-      display:grid;
-      grid-template-columns: 1fr auto;
-      gap:10px;
-      align-items:center;
-      padding:10px;
-      background: rgba(249,250,251,.95);
-      border:1px solid rgba(148,163,184,.10);
-      border-radius: 16px;
+      display:grid; grid-template-columns: 1fr auto; gap:12px;
+      padding:12px; background: #f9fafb; border:1px solid var(--border);
+      border-radius: 16px; margin-bottom:8px; align-items:center;
     }
-    /* ★発注数が1以上の商品を色変え */
-    .itemRow.hasQty{
-      border-color: rgba(34,197,94,.45);
-      background: rgba(34,197,94,.08);
-    }
+    .itemRow.hasQty{ border-color: var(--accent); background: rgba(34,197,94,.05); }
+    .itemRow.shortage{ border-color: var(--warn); background: rgba(245,158,11,.05); }
 
-    .itemRow.sortMode{grid-template-columns: auto 1fr auto; cursor:grab}
-    .itemRow.dragOver{outline:2px dashed rgba(34,197,94,.65)}
-    .dragHandle{
-      width:36px; height:36px;
-      border-radius:12px;
-      border:1px solid var(--border);
-      background:#fff;
-      display:flex; align-items:center; justify-content:center;
-      color:var(--muted);
-      font-weight:900;
-      user-select:none;
+    .qtyInput, .stockInput{
+      width:70px; text-align:center; padding:10px; border-radius:12px;
+      border:1px solid var(--border); font-weight:900; font-size:16px;
     }
-    .itemName{font-weight:800}
-    .itemMeta{font-size:12px; color:var(--muted); margin-top:2px}
+    
+    .btn{
+      padding:10px 16px; border-radius:12px; border:1px solid var(--border);
+      background:#fff; font-weight:700; cursor:pointer;
+    }
+    .btn.primary{background: var(--accent); color:#fff; border:none}
+    
+    .status-badge{ font-size:12px; padding:2px 8px; border-radius:4px; font-weight:bold; }
+    .status-ok{ background: #dcfce7; color: #166534; }
+    .status-sync{ background: #fef9c3; color: #854d0e; }
 
-    /* ★2入力（発注・在庫） */
-    .qtyBox{
-      display:flex; align-items:flex-end; gap:10px;
-    }
-    .miniCol{
-      display:flex; flex-direction:column; gap:6px; align-items:center;
-    }
-    .miniLabel{
-      font-size:11px;
-      color: var(--muted);
-      font-weight:900;
-      letter-spacing:.02em;
-      user-select:none;
-    }
-    .miniRow{display:flex; gap:8px; align-items:center}
-
-    .qtyBtn{
-      width:40px; height:40px;
-      border-radius:14px;
-      border:1px solid rgba(148,163,184,.18);
-      background: rgba(255,255,255,.85);
-      font-size:18px;
-      font-weight:900;
-      cursor:pointer;
-    }
-    .qtyInput{
-      width:70px;
-      text-align:center;
-      padding:10px 10px;
-      border-radius:14px;
-      border:1px solid rgba(148,163,184,.18);
-      background: rgba(255,255,255,.85);
-      outline:none;
-      font-weight:900;
-    }
-    .stockInput{
-      width:70px;
-      text-align:center;
-      padding:10px 10px;
-      border-radius:14px;
-      border:1px solid rgba(148,163,184,.18);
-      background: rgba(255,255,255,.85);
-      outline:none;
-      font-weight:900;
-    }
-
-    .pill{
-      font-size:12px;
-      padding:6px 8px;
-      border-radius:999px;
-      border:1px solid rgba(148,163,184,.18);
-      background: rgba(249,250,251,.90);
-      color:var(--muted);
-      white-space:nowrap;
-    }
-    .split{display:flex; justify-content:space-between; gap:10px; align-items:center; flex-wrap:wrap}
-    .hr{height:1px; background: rgba(148,163,184,.12); margin:12px 0}
-    textarea{
-      width:100%; min-height:140px;
-      border-radius: 16px;
-      border:1px solid rgba(148,163,184,.18);
-      background: rgba(255,255,255,.85);
-      padding:12px;
-      outline:none;
-      color: var(--text);
-    }
-    .toast{
-      position:fixed; left:50%; transform:translateX(-50%);
-      bottom:18px;
-      padding:10px 14px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.95);
-      border:1px solid rgba(148,163,184,.18);
-      color: var(--text);
-      box-shadow: var(--shadow);
-      opacity:0; pointer-events:none;
-      transition: opacity .15s ease;
-      z-index:50;
-    }
-    .toast.show{opacity:1}
-    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
-
-    /* --- modal --- */
-    .modalOverlay{
-      position:fixed; inset:0; z-index:60;
-      background: rgba(17,24,39,.35);
-      display:none;
-      align-items:center;
-      justify-content:center;
-      padding:14px;
-    }
-    .modal{
-      width:min(680px, 100%);
-      background: rgba(255,255,255,.98);
-      border:1px solid rgba(148,163,184,.18);
-      border-radius: 22px;
-      box-shadow: var(--shadow);
-      overflow:hidden;
-    }
-    .modalHeader{padding:12px 14px; border-bottom:1px solid rgba(148,163,184,.14); display:flex; justify-content:space-between; align-items:center; gap:10px}
-    .modalHeader .ttl{font-weight:900}
-    .modalBody{padding:14px}
-    .field{display:grid; gap:6px; margin-bottom:12px}
-    .field label{font-size:12px; color:var(--muted); font-weight:800}
-    .field input[type="text"], .field input[type="number"], .field input[type="time"], .field textarea{
-      width:100%;
-      padding:10px 12px;
-      border-radius:14px;
-      border:1px solid rgba(148,163,184,.18);
-      background: rgba(255,255,255,.90);
-      outline:none;
-    }
-    .field textarea{min-height:84px}
-    .daysGrid{display:grid; grid-template-columns: repeat(7, 1fr); gap:8px}
-    .dayBox{display:flex; flex-direction:column; align-items:center; gap:6px; padding:10px 0; border-radius:16px; border:1px solid rgba(148,163,184,.16); background: rgba(249,250,251,.95)}
-    .dayBox input{width:18px; height:18px}
-    .modalFooter{padding:12px 14px; border-top:1px solid rgba(148,163,184,.14); display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap}
+    input[type="date"]{ border:none; font-weight:bold; font-size:16px; outline:none; }
   </style>
 </head>
 <body>
-  <header>
-    <div class="row" style="justify-content:space-between">
-      <div class="row">
-        <div class="title">発注アシスト</div>
-        <div class="chip" title="納品日ごとに保存されます">
-          <span class="muted">納品日</span>
-          <button class="iconBtn" id="prevDayBtn" title="前日" type="button">‹</button>
-          <input id="date" class="date" type="date" />
-          <button class="iconBtn" id="nextDayBtn" title="翌日" type="button">›</button>
-          <button class="btn small" id="todayBtn" title="今日に戻す" type="button">今日</button>
-        </div>
-        <div class="chip" title="入力すると自動で保存されます">
-          <span class="muted">保存</span>
-          <span id="saveState" class="badge ok">OK</span>
-        </div>
-      </div>
-      <div class="row">
-        <button class="btn small" id="installBtn" style="display:none" type="button">ホーム画面に追加</button>
+
+<header>
+  <div class="row" style="justify-content:space-between">
+    <div class="row">
+      <b style="font-size:1.2em">発注アシスト</b>
+      <div class="chip">
+        <input type="date" id="dateInput" />
+        <span id="syncStatus" class="status-badge status-ok">Local</span>
       </div>
     </div>
-
-    <div class="tabs" role="tablist">
-      <div class="tab active" data-tab="vendors">業者</div>
-      <div class="tab" data-tab="today">今日の発注</div>
-      <div class="tab" data-tab="history">履歴</div>
-      <div class="tab" data-tab="settings">設定</div>
-    </div>
-  </header>
-
-  <main>
-    <section id="view-vendors" class="view">
-      <div class="grid cols2">
-        <div class="card">
-          <h2>業者</h2>
-          <div class="muted" style="margin-bottom:10px">タップ → 商品一覧 → 数量入力</div>
-          <div id="vendorList" class="list"></div>
-        </div>
-
-        <div class="card">
-          <div class="split">
-            <h2 id="vendorTitle">商品</h2>
-            <div class="row">
-              <button class="btn small" id="clearVendorBtn" type="button">この業者を0に</button>
-              <button class="btn small primary" id="toTodayBtn" type="button">今日の発注へ</button>
-            </div>
-          </div>
-          <div class="toolbar">
-            <input id="itemSearch" class="search" placeholder="商品検索（例：バター、牛乳…）" />
-            <button class="btn small" id="addItemBtn" type="button">＋商品追加</button>
-            <button class="btn small" id="sortItemsBtn" type="button">並べ替え</button>
-          </div>
-          <div id="itemList" class="list"></div>
-          <div class="muted" style="margin-top:10px; font-size:12px">※ 入力は自動保存（このiPad内）／複数端末で共有したい場合は「同期版」へ拡張できます</div>
-        </div>
-      </div>
-    </section>
-
-    <section id="view-today" class="view" style="display:none">
-      <div class="card">
-        <div class="split">
-          <h2>今日の発注</h2>
-          <div class="row">
-            <button class="btn small" id="copyAllBtn" type="button">全部コピー</button>
-            <button class="btn small" id="csvAllBtn" type="button">CSV出力</button>
-            <button class="btn small danger" id="clearDayBtn" type="button">今日を全部0に</button>
-          </div>
-        </div>
-        <div class="hr"></div>
-        <div id="todaySummary" class="list"></div>
-      </div>
-    </section>
-
-    <section id="view-history" class="view" style="display:none">
-      <div class="card">
-        <div class="split">
-          <h2>履歴</h2>
-          <button class="btn small danger" id="wipeAllBtn" type="button">全データ削除</button>
-        </div>
-        <div class="muted" style="margin:8px 0 12px">日付をタップすると読み込みます。</div>
-        <div id="historyList" class="list"></div>
-      </div>
-    </section>
-
-    <section id="view-settings" class="view" style="display:none">
-      <div class="card">
-        <h2>設定</h2>
-        <div class="muted" style="margin-bottom:10px">
-          マスター（業者・商品一覧）は端末内に保存されます。
-          追加した商品も含めて「書き出し」できます。
-        </div>
-        <div class="row" style="gap:12px; margin-bottom:12px">
-          <button class="btn" id="exportMasterBtn" type="button">マスターを書き出し（JSON）</button>
-          <label class="btn" style="cursor:pointer">
-            マスターを読み込み（JSON）
-            <input type="file" id="importMaster" accept="application/json" style="display:none" />
-          </label>
-          <button class="btn warn" id="resetMasterBtn" type="button">初期マスターに戻す</button>
-        </div>
-
-        <div class="hr"></div>
-
-        <h2 style="margin-top:0">納品・締切</h2>
-        <div class="muted" style="margin:8px 0 12px">業者ごとに「納品曜日」と「発注締切（当日/前日＋時刻）」を保存できます。</div>
-        <div id="vendorScheduleList" class="list" style="margin-bottom:12px"></div>
-        <div class="muted" style="font-size:12px">※「高瀬：祝日NG」など例外は、業者の「除外日」に日付を入れてください。</div>
-
-        <div class="hr"></div>
-
-        <h2 style="margin-top:0">クラウド同期（Googleスプレッドシート）</h2>
-        <div class="muted" style="margin:8px 0 12px">複数iPadで「同じ数量」を共有します。Googleスプレッドシートに保存／読み込みします。</div>
-
-        <div class="field">
-          <label><input type="checkbox" id="cloudEnable" /> クラウド同期を有効化</label>
-        </div>
-        <div class="field">
-          <label>Apps Script WebアプリURL（.../exec）</label>
-          <input id="cloudUrl" type="text" placeholder="https://script.google.com/macros/s/XXXX/exec" />
-        </div>
-        <div class="field">
-          <label>店舗ID（共有キー）</label>
-          <input id="cloudStoreId" type="text" placeholder="例：kudeta" />
-        </div>
-        <div class="field">
-          <label>APIキー（任意・推奨）</label>
-          <input id="cloudKey" type="text" placeholder="例：任意の合言葉" />
-        </div>
-
-        <div class="row" style="gap:10px; align-items:center; margin-top:8px">
-          <label class="btn" style="display:flex; gap:8px; align-items:center">
-            <input type="checkbox" id="cloudAuto" style="transform:scale(1.1)" />
-            自動でクラウドへ保存
-          </label>
-          <button class="btn" id="cloudPullBtn" type="button">クラウドから読み込み</button>
-          <button class="btn primary" id="cloudPushBtn" type="button">クラウドへ保存</button>
-          <span class="pill" id="cloudStatus">未設定</span>
-        </div>
-
-        <div class="muted" style="font-size:12px; margin-top:6px">※同期は「その日付の発注」を丸ごと保存／読み込みします（最後に保存した端末が優先）。</div>
-      </div>
-    </section>
-  </main>
-
-  <!-- Modals -->
-  <div id="itemModal" class="modalOverlay" role="dialog" aria-modal="true">
-    <div class="modal">
-      <div class="modalHeader">
-        <div class="ttl" id="itemModalTitle">商品設定</div>
-        <button class="btn small" id="itemModalClose" type="button">閉じる</button>
-      </div>
-      <div class="modalBody">
-        <div class="muted" style="font-size:12px; margin-bottom:10px">適正在庫は商品ごとに保存されます（この端末内）。</div>
-        <div class="field">
-          <label>商品名</label>
-          <input id="itemNameView" type="text" disabled />
-        </div>
-        <div class="field">
-          <label>単位</label>
-          <input id="itemUnitInput" type="text" placeholder="例：kg / 本 / 袋 / ケース" />
-        </div>
-        <div class="field">
-          <label>メモ</label>
-          <input id="itemMemoInput" type="text" placeholder="任意" />
-        </div>
-        <div class="field">
-          <label>適正在庫（数値）</label>
-          <input id="itemIdealInput" type="number" inputmode="numeric" min="0" step="1" placeholder="例：5" />
-        </div>
-        <div class="row" style="justify-content:space-between">
-          <button class="btn danger" id="itemDeleteBtn" type="button">この商品を削除</button>
-          <div class="muted" style="font-size:12px">※削除すると過去データの表示からも外れます</div>
-        </div>
-      </div>
-      <div class="modalFooter">
-        <button class="btn" id="itemModalCancel" type="button">キャンセル</button>
-        <button class="btn primary" id="itemModalSave" type="button">保存</button>
-      </div>
-    </div>
+    <button class="btn primary" onclick="pullFromCloud()">最新を取得</button>
   </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('vendors')">業者</div>
+    <div class="tab" onclick="switchTab('today')">今日の発注</div>
+    <div class="tab" onclick="switchTab('settings')">設定</div>
+    <div class="tab" onclick="switchTab('history')">履歴</div>
+  </div>
+</header>
 
-  <div id="vendorModal" class="modalOverlay" role="dialog" aria-modal="true">
-    <div class="modal">
-      <div class="modalHeader">
-        <div class="ttl" id="vendorModalTitle">納品・締切設定</div>
-        <button class="btn small" id="vendorModalClose" type="button">閉じる</button>
-      </div>
-      <div class="modalBody">
-        <div class="muted" style="font-size:12px; margin-bottom:10px">納品曜日と発注締切を編集できます（保存されます）。</div>
-
-        <div class="field">
-          <label>業者</label>
-          <input id="vendorNameView" type="text" disabled />
+<main>
+  <section id="view-vendors" class="view">
+    <div style="display:grid; grid-template-columns: 280px 1fr; gap:15px;">
+      <div id="vendorList" class="card"></div>
+      <div class="card">
+        <div id="itemHeader" style="margin-bottom:15px; display:flex; justify-content:space-between;">
+          <h3 id="selectedVendorName">業者を選択してください</h3>
         </div>
-
-        <div class="field">
-          <label>納品曜日</label>
-          <div class="daysGrid" id="vendorDaysGrid"></div>
-        </div>
-
-        <div class="row" style="gap:12px">
-          <div class="field" style="flex:1; margin:0">
-            <label>締切時刻</label>
-            <input id="vendorCutoffTime" type="time" />
-          </div>
-          <div class="field" style="flex:1; margin:0">
-            <label>締切の基準</label>
-            <div class="row" style="gap:10px; align-items:center; padding:10px 0">
-              <label class="row" style="gap:8px"><input type="radio" name="cutoffOffset" value="0" />当日</label>
-              <label class="row" style="gap:8px"><input type="radio" name="cutoffOffset" value="1" />前日</label>
-            </div>
-          </div>
-        </div>
-
-        <div class="field">
-          <label>祝日納品なし（メモ）</label>
-          <div class="row" style="gap:10px; align-items:center">
-            <label class="row" style="gap:8px"><input id="vendorNoHolidays" type="checkbox" />祝日NG</label>
-            <span class="muted" style="font-size:12px">※祝日判定はしないので、必要なら下の「除外日」に日付を入れてください</span>
-          </div>
-        </div>
-
-        <div class="field">
-          <label>除外日（納品しない日）</label>
-          <textarea id="vendorBlockDates" placeholder="例：2026-02-11, 2026-02-23
-カンマ区切り or 改行で入力"></textarea>
-        </div>
-      </div>
-      <div class="modalFooter">
-        <button class="btn" id="vendorModalCancel" type="button">キャンセル</button>
-        <button class="btn primary" id="vendorModalSave" type="button">保存</button>
+        <div id="itemList"></div>
       </div>
     </div>
-  </div>
+  </section>
 
-  <div id="toast" class="toast">OK</div>
+  <section id="view-settings" class="view" style="display:none">
+    <div class="card">
+      <h3>クラウド同期設定</h3>
+      <p style="font-size:13px; color:var(--muted)">Google Apps ScriptのURLを入力してください。</p>
+      <input type="text" id="gasUrl" style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid var(--border);" placeholder="https://script.google.com/macros/s/.../exec">
+      <input type="text" id="storeId" style="width:100%; padding:12px; border-radius:8px; border:1px solid var(--border);" placeholder="店舗名（例: MainStore）">
+      <div style="margin-top:15px">
+        <label><input type="checkbox" id="autoSync" checked> 自動保存を有効にする</label>
+      </div>
+      <button class="btn primary" style="margin-top:15px" onclick="saveSettings()">設定を保存</button>
+    </div>
+  </section>
 
-  <script>
-  // ---------- helpers ----------
-  const $ = (q) => document.querySelector(q);
-  const $$ = (q) => Array.from(document.querySelectorAll(q));
+  <section id="view-today" class="view" style="display:none">
+    <div class="card">
+      <h3>今日の発注リスト</h3>
+      <div id="todaySummary"></div>
+      <button class="btn" onclick="copySummary()">内容をコピー</button>
+    </div>
+  </section>
+</main>
 
-  function escapeHtml(s){
-    return String(s ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
-  }
+<script>
+  // --- 状態管理 ---
+  let orders = {}; // { date: { vendor: { item: { qty, stock } } } }
+  let master = { vendors: [] };
+  let currentVendor = "";
+  let config = JSON.parse(localStorage.getItem('orderConfig') || '{"gasUrl":"","storeId":"","autoSync":true}');
 
-  function localISODate(d=new Date()){
-    const y = d.getFullYear();
-    const m = String(d.getMonth()+1).padStart(2,'0');
-    const day = String(d.getDate()).padStart(2,'0');
-    return `${y}-${m}-${day}`;
-  }
-  function addDays(dateStr, delta){
-    const parts = String(dateStr||"").split("-");
-    const y = Number(parts[0]||0);
-    const m = Number(parts[1]||1);
-    const d = Number(parts[2]||1);
-    const dt = new Date(y, m-1, d);
-    dt.setDate(dt.getDate() + Number(delta||0));
-    return localISODate(dt);
-  }
-
-  function toast(msg){
-    const t = $('#toast');
-    if(!t) return;
-    t.textContent = msg;
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 1200);
-  }
-
-  function downloadText(filename, text){
-    const blob = new Blob([text], {type: 'text/plain;charset=utf-8'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = filename;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 800);
-  }
-
-  function downloadCSV(filename, rows){
-    const esc = (v) => {
-      const s = String(v ?? '');
-      if (/[",\n]/.test(s)) return `"${s.replaceAll('"','""')}"`;
-      return s;
-    };
-    const csv = rows.map(r => r.map(esc).join(',')).join('\n');
-    downloadText(filename, csv);
-  }
-
-  async function copyToClipboard(text){
-    try{
-      await navigator.clipboard.writeText(text);
-      toast('コピーしました');
-    }catch(e){
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      ta.remove();
-      toast('コピーしました');
-    }
-  }
-
-  // ---------- vendor channels ----------
-  // channel: 'infomart' | 'web' | 'line'
-  const DEFAULT_VENDOR_CHANNEL = {
-    '大光': 'infomart',
-    '高瀬': 'infomart',
-    'toho': 'web',
-    'TOHO': 'web',
-    'マルト': 'web',
-    'めいらく': 'web',
-    '安田青果': 'line',
-    'トキノ屋': 'line',
+  // --- 初期化 ---
+  window.onload = async () => {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('dateInput').value = today;
+    document.getElementById('gasUrl').value = config.gasUrl;
+    document.getElementById('storeId').value = config.storeId;
+    
+    await loadMaster();
+    loadLocalOrders();
+    if(config.gasUrl) pullFromCloud();
+    renderVendors();
   };
 
-  // ---------- delivery / cutoff defaults (editable) ----------
-  // deliveryDays: 0=日 ... 6=土
-  const ALL_DAYS = [0,1,2,3,4,5,6];
-  const DOW_LABELS = ['日','月','火','水','木','金','土'];
-
-  // schedule is stored per-vendor as vendor.schedule in master
-  const DEFAULT_VENDOR_SCHEDULE = {
-    '大光':     { deliveryDays:[1,2,3,4,5], cutoffTime:'14:30', cutoffOffsetDays:1, noHolidays:false, blockDates:[] },
-    '高瀬':     { deliveryDays:[1,2,3,4,5], cutoffTime:'03:00', cutoffOffsetDays:0, noHolidays:true,  blockDates:[] },
-    'マルト':   { deliveryDays:ALL_DAYS,    cutoffTime:'03:00', cutoffOffsetDays:0, noHolidays:false, blockDates:[] },
-    'めいらく': { deliveryDays:[1,3,5],     cutoffTime:'16:00', cutoffOffsetDays:1, noHolidays:false, blockDates:[] },
-    'TOHO':     { deliveryDays:[2,5],       cutoffTime:'03:00', cutoffOffsetDays:0, noHolidays:false, blockDates:[] },
-    'toho':     { deliveryDays:[2,5],       cutoffTime:'03:00', cutoffOffsetDays:0, noHolidays:false, blockDates:[] },
-    '安田青果': { deliveryDays:ALL_DAYS,    cutoffTime:'03:00', cutoffOffsetDays:0, noHolidays:false, blockDates:[] },
-    'トキノ屋': { deliveryDays:ALL_DAYS,    cutoffTime:'03:00', cutoffOffsetDays:0, noHolidays:false, blockDates:[] },
-  };
-
-  function getVendorObj(name){
-    return master?.vendors?.find(x => x.name === name) || null;
+  async function loadMaster() {
+    // 本来は外部JSON等から取得。今回はサンプル
+    master.vendors = [
+      {name: "大光", items: [{name: "バター", unit: "kg", ideal: 5}, {name: "牛乳", unit: "本", ideal: 10}]},
+      {name: "高瀬", items: [{name: "キャベツ", unit: "玉", ideal: 3}, {name: "レタス", unit: "玉", ideal: 2}]}
+    ];
   }
 
-  function vendorChannel(name){
-    const v = getVendorObj(name);
-    return (v && v.channel) ? v.channel : (DEFAULT_VENDOR_CHANNEL[name] || 'web');
+  function loadLocalOrders() {
+    const saved = localStorage.getItem('orders');
+    if(saved) orders = JSON.parse(saved);
   }
 
-  function channelLabel(ch){
-    return ch === 'infomart' ? 'Infomart' : ch === 'line' ? 'LINE' : 'WEB';
-  }
-
-  function normalizeDays(arr, fallback){
-    const base = Array.isArray(arr) ? arr : (fallback || []);
-    const s = new Set(base.map(n => Number(n)).filter(n => Number.isFinite(n) && n>=0 && n<=6));
-    const out = Array.from(s).sort((a,b)=>a-b);
-    return out.length ? out : (fallback || [1,2,3,4,5]);
-  }
-
-  function normalizeBlockDates(arr){
-    const out = [];
-    for(const x of (Array.isArray(arr) ? arr : [])){
-      const s = String(x).slice(0,10);
-      if(/^\d{4}-\d{2}-\d{2}$/.test(s)) out.push(s);
-    }
-    return Array.from(new Set(out)).sort();
-  }
-
-  function scheduleForVendor(name){
-    const v = getVendorObj(name);
-    const base = DEFAULT_VENDOR_SCHEDULE[name] || { deliveryDays:[1,2,3,4,5], cutoffTime:'03:00', cutoffOffsetDays:0, noHolidays:false, blockDates:[] };
-    const sch = (v && v.schedule) ? v.schedule : base;
-    const days = normalizeDays(sch.deliveryDays, base.deliveryDays);
-    const blockDates = normalizeBlockDates(sch.blockDates || base.blockDates);
-    const cutoffTime = String(sch.cutoffTime || base.cutoffTime || '03:00');
-    const cutoffOffsetDays = Number(sch.cutoffOffsetDays);
-    return {
-      deliveryDays: days,
-      cutoffTime,
-      cutoffOffsetDays: (cutoffOffsetDays === 1 ? 1 : 0),
-      noHolidays: !!(sch.noHolidays ?? base.noHolidays),
-      blockDates,
-    };
-  }
-
-  function daysSummary(days){
-    const s = normalizeDays(days, days);
-    if(s.length === 7) return '毎日';
-    const key = s.join(',');
-    if(key === '1,2,3,4,5') return '月〜金';
-    if(key === '1,2,3,4,5,6') return '月〜土';
-    if(key === '0,6') return '土日';
-    let consec = true;
-    for(let i=0;i<s.length-1;i++){
-      if(s[i+1] !== s[i] + 1){ consec = false; break; }
-    }
-    if(consec && s.length >= 3) return `${DOW_LABELS[s[0]]}〜${DOW_LABELS[s[s.length-1]]}`;
-    return s.map(d => DOW_LABELS[d]).join('・');
-  }
-
-  function cutoffLabel(name){
-    const sch = scheduleForVendor(name);
-    const when = sch.cutoffOffsetDays === 1 ? '前日' : '当日';
-    return `${when}${sch.cutoffTime}`;
-  }
-
-  function weekdayOf(dateStr){
-    const [y,m,d] = String(dateStr).split('-').map(n => parseInt(n,10));
-    const dt = new Date(y, (m||1)-1, d||1);
-    return dt.getDay();
-  }
-
-  function isDeliveryDay(name, dateStr){
-    const sch = scheduleForVendor(name);
-    if(sch.blockDates.includes(dateStr)) return false;
-    const dow = weekdayOf(dateStr);
-    return sch.deliveryDays.includes(dow);
-  }
-
-  function nextDeliveryDate(name, fromDateStr){
-    for(let i=0;i<30;i++){
-      const d = addDays(fromDateStr, i);
-      if(isDeliveryDay(name, d)) return d;
-    }
-    return fromDateStr;
-  }
-
-  function cutoffDateTimeForDelivery(name, deliveryDateStr){
-    const sch = scheduleForVendor(name);
-    const deadlineDate = addDays(deliveryDateStr, sch.cutoffOffsetDays === 1 ? -1 : 0);
-    return { date: deadlineDate, time: sch.cutoffTime, when: (sch.cutoffOffsetDays===1?'前日':'当日') };
-  }
-
-  // ---------- storage keys ----------
-  const KEY_MASTER = 'orderAssist.master.v1';
-  const KEY_ORDERS = 'orderAssist.orders.v1'; // {date: {vendor: {itemName: {qty, stock, unit, memo}}}}
-  const KEY_CLOUD  = 'orderAssist.cloud.v1';
-
-  function getCloud(){
-    const raw = localStorage.getItem(KEY_CLOUD);
-    if(!raw) return { enabled:false, autoPush:true, storeId:'kudeta', scriptUrl:'', apiKey:'' };
-    try{
-      const x = JSON.parse(raw);
-      return {
-        enabled: !!x.enabled,
-        autoPush: x.autoPush !== false,
-        storeId: String(x.storeId || 'kudeta'),
-        scriptUrl: String(x.scriptUrl || ''),
-        apiKey: String(x.apiKey || ''),
-      };
-    }catch(e){
-      return { enabled:false, autoPush:true, storeId:'kudeta', scriptUrl:'', apiKey:'' };
-    }
-  }
-  function setCloud(c){
-    localStorage.setItem(KEY_CLOUD, JSON.stringify(c));
-  }
-  let cloud = getCloud();
-
-  function cloudReady(){
-    return cloud.enabled && cloud.scriptUrl.trim().startsWith('https://');
-  }
-
-  function setCloudStatus(text){
-    const el = document.getElementById('cloudStatus');
-    if(el) el.textContent = text;
-  }
-
-  function buildCloudGetUrl(date){
-    const u = new URL(cloud.scriptUrl);
-    u.searchParams.set('action','get');
-    u.searchParams.set('storeId', cloud.storeId || 'kudeta');
-    u.searchParams.set('date', date);
-    if(cloud.apiKey) u.searchParams.set('key', cloud.apiKey);
-    return u.toString();
-  }
-
-  function buildCloudPostUrl(){
-    const u = new URL(cloud.scriptUrl);
-    u.searchParams.set('action','save');
-    if(cloud.apiKey) u.searchParams.set('key', cloud.apiKey);
-    return u.toString();
-  }
-
-  function getMaster(){
-    const raw = localStorage.getItem(KEY_MASTER);
-    if(!raw) return null;
-    try{ return JSON.parse(raw); }catch(e){ return null; }
-  }
-  function setMaster(m){
-    localStorage.setItem(KEY_MASTER, JSON.stringify(m));
-  }
-
-  function getOrders(){
-    const raw = localStorage.getItem(KEY_ORDERS);
-    if(!raw) return {};
-    try{ return JSON.parse(raw); }catch(e){ return {}; }
-  }
-  function setOrders(o){
-    localStorage.setItem(KEY_ORDERS, JSON.stringify(o));
-  }
-
-  // ---------- app state ----------
-  let master = null;
-  let sortMode = false;
-  let orders = getOrders();
-  let currentVendor = null;
-  let currentDate = localISODate();
-
-  // ---------- seed ----------
-  async function initMaster(){
-    const existing = getMaster();
-    if(existing){ master = existing; return; }
-
-    const res = await fetch('master_seed.json', {cache:'no-store'});
-    const seed = await res.json();
-
-    seed.vendors = (seed.vendors || []).map(v => ({
-      name: String(v.name || '').trim(),
-      channel: String(v.channel || DEFAULT_VENDOR_CHANNEL[String(v.name||'').trim()] || 'web'),
-      items: (v.items || []).map(it => ({
-        name: String(it.name || '').trim(),
-        unit: String(it.unit || ''),
-        memo: String(it.memo || ''),
-        idealStock: (it.idealStock==null? '' : String(it.idealStock))
-      })).filter(it => it.name),
-      schedule: v.schedule || DEFAULT_VENDOR_SCHEDULE[String(v.name||'').trim()] || {deliveryDays:[1,2,3,4,5], cutoffTime:'03:00', cutoffOffsetDays:0, noHolidays:false, blockDates:[]}
-    })).filter(v => v.name);
-
-    master = seed;
-    setMaster(master);
-  }
-
-  function migrateMaster(){
-    let changed = false;
-    if(!master || !Array.isArray(master.vendors)) return false;
-
-    for(const v of master.vendors){
-      if(!v.schedule){
-        v.schedule = DEFAULT_VENDOR_SCHEDULE[String(v.name||'').trim()] || { deliveryDays:[1,2,3,4,5], cutoffTime:'03:00', cutoffOffsetDays:0, noHolidays:false, blockDates:[] };
-        changed = true;
-      }
-      if(!Array.isArray(v.items)) v.items = [];
-      for(const it of v.items){
-        if(it.idealStock === undefined){ it.idealStock = ''; changed = true; }
-        if(it.unit === undefined) it.unit = '';
-        if(it.memo === undefined) it.memo = '';
-      }
-    }
-
-    // ★既存ordersにstockが無い場合は、そのままでもOK（参照時に0扱い）
-    //   ただし必要ならここで埋めても良いが、データ量が増えるのでここでは触らない。
-
-    if(changed) setMaster(master);
-    return changed;
-  }
-
-  function ensureDay(date){
-    if(!orders[date]) orders[date] = {};
-    for(const v of master.vendors){
-      if(!orders[date][v.name]) orders[date][v.name] = {};
-    }
-  }
-
-  function getQty(date, vendor, itemName){
-    ensureDay(date);
-    const x = orders[date][vendor][itemName];
-    return x ? Number(x.qty || 0) : 0;
-  }
-
-  // ★在庫の取得
-  function getStock(date, vendor, itemName){
-    ensureDay(date);
-    const x = orders[date][vendor][itemName];
-    return x ? Number(x.stock || 0) : 0;
-  }
-
-  const saveStateEl = $('#saveState');
-  let saveTimer = null;
-
-  function markSaving(){
-    if(!saveStateEl) return;
-    saveStateEl.textContent = '保存中…';
-    saveStateEl.classList.remove('ok');
-  }
-  function markSaved(){
-    if(!saveStateEl) return;
-    saveStateEl.textContent = 'OK';
-    saveStateEl.classList.add('ok');
-  }
-
-  function scheduleSave(){
-    markSaving();
-    clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => {
-      setOrders(orders);
-      markSaved();
-    }, 250);
-  }
-
-  // ★qty更新（stockは保持）
-  function setQty(date, vendor, item){
-    ensureDay(date);
-    const now = Date.now();
-    if(!orders[date][vendor][item.name]){
-      orders[date][vendor][item.name] = {qty:0, stock:0, unit:item.unit, memo:item.memo, updatedAt: now};
-    }
-    const obj = orders[date][vendor][item.name];
-    obj.qty = Number(item.qty || 0);
-    obj.stock = Number(obj.stock || 0);
-    obj.unit = item.unit || '';
-    obj.memo = item.memo || '';
-    obj.updatedAt = now;
-    scheduleSave();
-    scheduleCloudPush();
-  }
-
-  // ★stock更新（qtyは保持）
-  function setStock(date, vendor, item){
-    ensureDay(date);
-    const now = Date.now();
-    if(!orders[date][vendor][item.name]){
-      orders[date][vendor][item.name] = {qty:0, stock:0, unit:item.unit, memo:item.memo, updatedAt: now};
-    }
-    const obj = orders[date][vendor][item.name];
-    obj.stock = Number(item.stock || 0);
-    obj.qty = Number(obj.qty || 0);
-    obj.unit = item.unit || '';
-    obj.memo = item.memo || '';
-    obj.updatedAt = now;
-    scheduleSave();
-    scheduleCloudPush();
-  }
-
-  // ---------- cloud ----------
-  function buildDayPayload(date){
-    ensureDay(date);
-    const out = {};
-    for(const v of master.vendors){
-      const vname = v.name;
-      const items = orders[date][vname] || {};
-      for(const it of v.items){
-        const rec = items[it.name];
-        const qty = rec ? Number(rec.qty || 0) : 0;
-        const stock = rec ? Number(rec.stock || 0) : 0;
-
-        // ★発注 or 在庫 があるものだけ送る（無駄に肥大化させない）
-        if(qty !== 0 || stock !== 0){
-          if(!out[vname]) out[vname] = {};
-          out[vname][it.name] = {
-            qty,
-            stock,
-            unit: String(it.unit || rec?.unit || ''),
-            memo: String(it.memo || rec?.memo || ''),
-            updatedAt: Number(rec?.updatedAt || Date.now())
-          };
-        }
-      }
-    }
-    return out;
-  }
-
-  function applyCloudDay(date, cloudOrders){
-    ensureDay(date);
-
-    // reset all to 0（qty/stock両方）
-    for(const v of master.vendors){
-      const vname = v.name;
-      if(!orders[date][vname]) orders[date][vname] = {};
-      for(const it of v.items){
-        if(!orders[date][vname][it.name]){
-          orders[date][vname][it.name] = {qty:0, stock:0, unit:it.unit||'', memo:it.memo||'', updatedAt:0};
-        }
-        orders[date][vname][it.name].qty = 0;
-        orders[date][vname][it.name].stock = 0;
-      }
-    }
-
-    // apply cloud
-    for(const [vname, items] of Object.entries(cloudOrders || {})){
-      if(!orders[date][vname]) orders[date][vname] = {};
-      for(const [iname, rec] of Object.entries(items || {})){
-        if(!orders[date][vname][iname]) orders[date][vname][iname] = {qty:0, stock:0, unit:'', memo:'', updatedAt:0};
-        orders[date][vname][iname].qty = Number(rec.qty || 0);
-        orders[date][vname][iname].stock = Number(rec.stock || 0);
-        orders[date][vname][iname].unit = String(rec.unit || orders[date][vname][iname].unit || '');
-        orders[date][vname][iname].memo = String(rec.memo || orders[date][vname][iname].memo || '');
-        orders[date][vname][iname].updatedAt = Number(rec.updatedAt || Date.now());
-      }
-    }
-
-    setOrders(orders);
-    markSaved();
-  }
-
-  async function cloudPull(date, silent=false){
-    if(!cloudReady()){
-      if(!silent) toast('クラウド未設定です');
-      return;
-    }
-    try{
-      setCloudStatus('読み込み中…');
-      const res = await fetch(buildCloudGetUrl(date), {cache:'no-store'});
-      const data = await res.json();
-      if(!data.ok) throw new Error(data.error || '読み込み失敗');
-      applyCloudDay(date, data.orders || {});
-      renderVendors();
-      renderItems();
-      renderTodaySummary(false);
-      renderHistory();
-      setCloudStatus('同期OK');
-      if(!silent) toast('クラウドから読み込みました');
-    }catch(e){
-      setCloudStatus('同期NG');
-      if(!silent) toast('クラウド読み込み失敗');
-      console.error(e);
-    }
-  }
-
-  async function cloudPush(date, silent=false){
-    if(!cloudReady()){
-      if(!silent) toast('クラウド未設定です');
-      return;
-    }
-    try{
-      setCloudStatus('保存中…');
-      const payload = {
-        storeId: cloud.storeId || 'kudeta',
-        date,
-        orders: buildDayPayload(date)
-      };
-      const res = await fetch(buildCloudPostUrl(), {
+  // --- クラウド同期ロジック ---
+  async function syncToCloud() {
+    if(!config.gasUrl) return;
+    setStatus('sync', '同期中...');
+    
+    const date = document.getElementById('dateInput').value;
+    try {
+      const res = await fetch(config.gasUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+          date: date,
+          storeId: config.storeId,
+          data: JSON.stringify(orders[date] || {})
+        })
       });
-      const data = await res.json();
-      if(!data.ok) throw new Error(data.error || '保存失敗');
-      setCloudStatus('同期OK');
-      if(!silent) toast('クラウドへ保存しました');
-    }catch(e){
-      setCloudStatus('同期NG');
-      if(!silent) toast('クラウド保存失敗');
-      console.error(e);
+      if(res.ok) setStatus('ok', 'Cloud OK');
+    } catch(e) {
+      setStatus('err', '同期失敗');
     }
   }
 
-  let cloudPushTimer = null;
-  function scheduleCloudPush(){
-    if(!cloudReady()) return;
-    if(!cloud.autoPush) return;
-    clearTimeout(cloudPushTimer);
-    cloudPushTimer = setTimeout(() => cloudPush(currentDate, true), 900);
-  }
-
-  function initCloudUI(){
-    const en = document.getElementById('cloudEnable');
-    const url = document.getElementById('cloudUrl');
-    const sid = document.getElementById('cloudStoreId');
-    const key = document.getElementById('cloudKey');
-    const auto = document.getElementById('cloudAuto');
-    const pull = document.getElementById('cloudPullBtn');
-    const push = document.getElementById('cloudPushBtn');
-
-    if(!en) return;
-    en.checked = cloud.enabled;
-    if(url) url.value = cloud.scriptUrl;
-    if(sid) sid.value = cloud.storeId;
-    if(key) key.value = cloud.apiKey;
-    if(auto) auto.checked = cloud.autoPush;
-
-    const refresh = () => {
-      cloud = {
-        enabled: !!en.checked,
-        autoPush: auto ? !!auto.checked : true,
-        storeId: sid ? String(sid.value || 'kudeta').trim() : 'kudeta',
-        scriptUrl: url ? String(url.value || '').trim() : '',
-        apiKey: key ? String(key.value || '').trim() : ''
-      };
-      setCloud(cloud);
-      setCloudStatus(cloudReady() ? '準備OK' : (cloud.enabled ? 'URL未設定' : 'OFF'));
-    };
-
-    [en,url,sid,key,auto].forEach(el => {
-      if(el) el.addEventListener('change', refresh);
-      if(el && el.tagName === 'INPUT' && el.type === 'text') el.addEventListener('input', refresh);
-    });
-
-    if(pull) pull.addEventListener('click', () => cloudPull(currentDate));
-    if(push) push.addEventListener('click', () => cloudPush(currentDate));
-
-    refresh();
-  }
-
-  // ---------- rendering ----------
-  function renderVendors(){
-    const list = $('#vendorList');
-    if(!list) return;
-    list.innerHTML = '';
-    const day = orders[currentDate] || {};
-
-    master.vendors.forEach(v => {
-      const count = Object.values((day[v.name]||{})).reduce((acc, it) => acc + (Number(it.qty||0)>0 ? 1 : 0), 0);
-      const el = document.createElement('div');
-      el.className = 'vendorItem' + (v.name === currentVendor ? ' selected' : '');
-      el.innerHTML = `
-        <div>
-          <div class="name">${escapeHtml(v.name)}</div>
-          <div class="muted" style="font-size:12px">${channelLabel(v.channel || vendorChannel(v.name))} ・ 納品:${escapeHtml(daysSummary(scheduleForVendor(v.name).deliveryDays))} ・ 締切:${escapeHtml(cutoffLabel(v.name))} ・ 商品 ${v.items.length} 件</div>
-        </div>
-        <div class="row" style="gap:8px">
-          <span class="badge">${channelLabel(vendorChannel(v.name))}</span>
-          <span class="badge ${count>0?'ok':''}">${count>0?`入力 ${count}`:'未入力'}</span>
-          <span class="badge">→</span>
-        </div>
-      `;
-      el.addEventListener('click', () => {
-        if(sortMode) setSortMode(false);
-        currentVendor = v.name;
-        $('#vendorTitle').textContent = `商品：${v.name}`;
-        $('#itemSearch').value = '';
-        renderVendors();
+  async function pullFromCloud() {
+    if(!config.gasUrl) return;
+    const date = document.getElementById('dateInput').value;
+    setStatus('sync', '取得中...');
+    
+    try {
+      const res = await fetch(`${config.gasUrl}?date=${date}&storeId=${config.storeId}`);
+      const result = await res.json();
+      if(result.data && result.data !== "{}") {
+        orders[date] = JSON.parse(result.data);
+        localStorage.setItem('orders', JSON.stringify(orders));
         renderItems();
-      });
-      list.appendChild(el);
-    });
-
-    if(!currentVendor && master.vendors.length){
-      currentVendor = master.vendors[0].name;
-      $('#vendorTitle').textContent = `商品：${currentVendor}`;
-      renderVendors();
-      renderItems();
+        setStatus('ok', 'Cloud同期済');
+      } else {
+        setStatus('ok', 'Cloudデータ無');
+      }
+    } catch(e) {
+      setStatus('err', '取得失敗');
     }
   }
 
-  function renderItems(){
-    const v = master.vendors.find(x => x.name === currentVendor);
-    const list = $('#itemList');
-    if(!list) return;
-    list.innerHTML = '';
-    if(!v){
-      list.innerHTML = `<div class="muted">業者を選んでください</div>`;
-      return;
-    }
+  // --- 描画ロジック ---
+  function renderVendors() {
+    const container = document.getElementById('vendorList');
+    container.innerHTML = master.vendors.map(v => `
+      <div class="tab" onclick="selectVendor('${v.name}')" id="v-${v.name}">${v.name}</div>
+    `).join('');
+  }
 
-    if(sortMode){
-      if(v.items.length === 0){
-        list.innerHTML = `<div class="muted">商品がありません。まずは商品追加してください。</div>`;
-        return;
-      }
-      v.items.forEach((it, idx) => {
-        const row = document.createElement('div');
-        row.className = 'itemRow sortMode';
-        row.draggable = true;
-        row.innerHTML = `
-          <div class="dragHandle" title="ドラッグで移動">≡</div>
+  function selectVendor(name) {
+    currentVendor = name;
+    document.querySelectorAll('#vendorList .tab').forEach(el => el.classList.remove('active'));
+    document.getElementById(`v-${name}`).classList.add('active');
+    document.getElementById('selectedVendorName').innerText = name;
+    renderItems();
+  }
+
+  function renderItems() {
+    const date = document.getElementById('dateInput').value;
+    const vendor = master.vendors.find(v => v.name === currentVendor);
+    if(!vendor) return;
+
+    const container = document.getElementById('itemList');
+    container.innerHTML = vendor.items.map(item => {
+      const data = (orders[date] && orders[date][currentVendor] && orders[date][currentVendor][item.name]) || {qty:0, stock:0};
+      const isShort = data.stock < item.ideal;
+      
+      return `
+        <div class="itemRow ${data.qty > 0 ? 'hasQty' : ''} ${isShort ? 'shortage' : ''}">
           <div>
-            <div class="itemName">${escapeHtml(it.name)}</div>
-            <div class="itemMeta">
-              ${it.unit ? `<span class="pill">単位：${escapeHtml(it.unit)}</span>` : `<span class="pill">単位：未設定</span>`}
-              ${it.memo ? `<span class="pill">メモ：${escapeHtml(it.memo)}</span>` : ``}
-              ${(it.idealStock!=null && String(it.idealStock).trim()!=='' ) ? `<span class="pill">適正：${escapeHtml(it.idealStock)}</span>` : ``}
-            </div>
-          </div>
-          <div class="row" style="gap:6px">
-            <button class="btn small" data-move="up" title="上へ" type="button">↑</button>
-            <button class="btn small" data-move="down" title="下へ" type="button">↓</button>
-          </div>
-        `;
-
-        row.querySelectorAll('button[data-move]').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const dir = btn.getAttribute('data-move');
-            const to = dir === 'up' ? idx - 1 : idx + 1;
-            if(to < 0 || to >= v.items.length) return;
-            const moved = v.items.splice(idx, 1)[0];
-            v.items.splice(to, 0, moved);
-            setMaster(master);
-            renderItems();
-            renderVendors();
-          });
-        });
-
-        row.addEventListener('dragstart', (e) => {
-          try{
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', String(idx));
-          }catch(_){ }
-        });
-        row.addEventListener('dragover', (e) => { e.preventDefault(); row.classList.add('dragOver'); });
-        row.addEventListener('dragleave', () => row.classList.remove('dragOver'));
-        row.addEventListener('drop', (e) => {
-          e.preventDefault();
-          row.classList.remove('dragOver');
-          const from = Number(e.dataTransfer?.getData('text/plain'));
-          const to = idx;
-          if(!Number.isFinite(from) || from < 0 || from >= v.items.length) return;
-          if(from === to) return;
-          const moved = v.items.splice(from, 1)[0];
-          v.items.splice(to, 0, moved);
-          setMaster(master);
-          renderItems();
-          renderVendors();
-        });
-
-        list.appendChild(row);
-      });
-
-      list.insertAdjacentHTML('beforeend', `<div class="muted" style="font-size:12px">※ ドラッグ、または ↑↓ で並べ替えできます（完了を押すと通常表示に戻ります）</div>`);
-      return;
-    }
-
-    const q = ($('#itemSearch').value || '').trim().toLowerCase();
-    const items = v.items.filter(it => !q || it.name.toLowerCase().includes(q) || (it.memo||'').toLowerCase().includes(q));
-
-    if(items.length === 0){
-      list.innerHTML = `<div class="muted">該当なし。商品追加もできます。</div>`;
-      return;
-    }
-
-    const clamp = (n) => {
-      if(!Number.isFinite(n) || n<0) return 0;
-      if(n>9999) return 9999;
-      return Math.round(n);
-    };
-
-    for(const it of items){
-      const qty = getQty(currentDate, v.name, it.name);
-      const stock = getStock(currentDate, v.name, it.name);
-
-      const row = document.createElement('div');
-      row.className = 'itemRow' + (qty >= 1 ? ' hasQty' : '');
-
-      row.innerHTML = `
-        <div>
-          <div class="itemName">${escapeHtml(it.name)}</div>
-          <div class="itemMeta">
-            ${it.unit ? `<span class="pill">単位：${escapeHtml(it.unit)}</span>` : `<span class="pill">単位：未設定</span>`}
-            ${it.memo ? `<span class="pill">メモ：${escapeHtml(it.memo)}</span>` : ``}
-            ${it.idealStock!=='' && it.idealStock!=null && String(it.idealStock).trim()!=='' ? `<span class="pill">適正：${escapeHtml(it.idealStock)}</span>` : `<span class="pill">適正：未設定</span>`}
-          </div>
-        </div>
-
-        <div class="qtyBox">
-          <button class="btn small" data-act="editItem" title="商品設定" type="button">⚙</button>
-
-          <div class="miniCol">
-            <div class="miniLabel">発注</div>
-            <div class="miniRow">
-              <button class="qtyBtn" data-delta="-1" data-kind="qty" type="button">−</button>
-              <input class="qtyInput" data-kind="qty" inputmode="numeric" pattern="[0-9]*" value="${qty}" />
-              <button class="qtyBtn" data-delta="+1" data-kind="qty" type="button">＋</button>
-            </div>
-          </div>
-
-          <div class="miniCol">
-            <div class="miniLabel">在庫</div>
-            <div class="miniRow">
-              <button class="qtyBtn" data-delta="-1" data-kind="stock" type="button">−</button>
-              <input class="stockInput" data-kind="stock" inputmode="numeric" pattern="[0-9]*" value="${stock}" />
-              <button class="qtyBtn" data-delta="+1" data-kind="stock" type="button">＋</button>
-            </div>
-          </div>
-        </div>
-      `;
-
-      const qtyInput = row.querySelector('input[data-kind="qty"]');
-      const stockInput = row.querySelector('input[data-kind="stock"]');
-
-      function commitQty(n){
-        const newQty = clamp(n);
-        qtyInput.value = String(newQty);
-        setQty(currentDate, v.name, {...it, qty:newQty});
-        row.classList.toggle('hasQty', newQty >= 1);
-        renderVendors();
-        renderTodaySummary(false);
-      }
-
-      function commitStock(n){
-        const newStock = clamp(n);
-        stockInput.value = String(newStock);
-        setStock(currentDate, v.name, {...it, stock:newStock});
-        // 在庫は色変更なし（必要なら後で追加できる）
-        renderVendors();
-        renderTodaySummary(false);
-      }
-
-      row.querySelectorAll('button.qtyBtn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const kind = btn.getAttribute('data-kind');
-          const delta = Number(btn.getAttribute('data-delta') || 0);
-          if(kind === 'qty'){
-            commitQty(Number(qtyInput.value||0) + delta);
-          }else{
-            commitStock(Number(stockInput.value||0) + delta);
-          }
-        });
-      });
-
-      qtyInput.addEventListener('change', () => {
-        const n = Number(String(qtyInput.value).replace(/[^0-9]/g,''));
-        commitQty(n);
-      });
-      qtyInput.addEventListener('dblclick', () => commitQty(0));
-
-      stockInput.addEventListener('change', () => {
-        const n = Number(String(stockInput.value).replace(/[^0-9]/g,''));
-        commitStock(n);
-      });
-      stockInput.addEventListener('dblclick', () => commitStock(0));
-
-      const editBtn = row.querySelector('[data-act="editItem"]');
-      if(editBtn){
-        editBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          openItemModal(v.name, it.name);
-        });
-      }
-
-      list.appendChild(row);
-    }
-  }
-
-  function fmtMD(date){
-    const parts = String(date).split('-');
-    if(parts.length!==3) return date;
-    const m = String(parseInt(parts[1],10));
-    const d = String(parseInt(parts[2],10));
-    return `${m}/${d}`;
-  }
-
-  function collectVendorLines(date, vendor){
-    ensureDay(date);
-    const entries = orders[date][vendor] || {};
-    const lines = [];
-    const vObj = master.vendors.find(v=>v.name===vendor);
-    for(const it of (vObj?.items || [])){
-      const x = entries[it.name];
-      const qty = Number(x?.qty || 0);
-      if(qty>0){
-        const unit = x?.unit || it.unit || '';
-        const memo = x?.memo || it.memo || '';
-        lines.push({name: it.name, qty, unit, memo});
-      }
-    }
-    return lines;
-  }
-
-  function buildTextForVendor(date, vendor){
-    const ch = vendorChannel(vendor);
-    const items = collectVendorLines(date, vendor);
-
-    if(ch === 'line'){
-      const out = [];
-      out.push(`${vendor}さん`);
-      out.push('いつもありがとうございます。KU-DETAです。');
-      out.push(`【${fmtMD(date)}】発注お願いします。`);
-      if(!items.length){
-        out.push('（今回は発注なしです）');
-      }else{
-        for(const it of items){
-          out.push(`・${it.name} ${it.qty}${it.unit ? ' ' + it.unit : ''}${it.memo ? '（' + it.memo + '）' : ''}`);
-        }
-      }
-      out.push('以上、よろしくお願いします。');
-      return out.join('\n');
-    }
-
-    const out = [];
-    out.push(`【${date}】 ${vendor} 発注（${channelLabel(ch)}）`);
-    if(!items.length){
-      out.push('- （入力なし）');
-      return out.join('\n');
-    }
-
-    for(const it of items){
-      const qtyPart = `${it.qty}${it.unit ? ' ' + it.unit : ''}`;
-      if(ch === 'infomart'){
-        out.push(`${it.name}\t${qtyPart}${it.memo ? '\t' + it.memo : ''}`);
-      }else{
-        out.push(`- ${it.name}：${qtyPart}${it.memo ? '（' + it.memo + '）' : ''}`);
-      }
-    }
-    return out.join('\n');
-  }
-
-  function buildCSVRowsForVendor(date, vendor){
-    const ch = vendorChannel(vendor);
-    const items = collectVendorLines(date, vendor);
-    const rows = [['date','vendor','channel','item','qty','unit','memo']];
-    for(const it of items){
-      rows.push([date, vendor, channelLabel(ch), it.name, it.qty, it.unit || '', it.memo || '']);
-    }
-    return rows;
-  }
-
-  function buildAllText(date){
-    const blocks = [];
-    for(const v of master.vendors){
-      const has = collectVendorLines(date, v.name).length > 0;
-      if(has) blocks.push(buildTextForVendor(date, v.name));
-    }
-    return blocks.length ? blocks.join('\n\n') : `【${date}】 発注（入力なし）`;
-  }
-
-  function buildAllCSVRows(date){
-    const rows = [['date','vendor','item','qty','unit','memo']];
-    ensureDay(date);
-    for(const v of master.vendors){
-      const entries = orders[date][v.name] || {};
-      for(const it of v.items){
-        const x = entries[it.name];
-        const qty = Number(x?.qty || 0);
-        if(qty>0){
-          rows.push([date, v.name, it.name, qty, x?.unit || it.unit || '', x?.memo || it.memo || '']);
-        }
-      }
-    }
-    return rows;
-  }
-
-  function renderTodaySummary(scrollTop=true){
-    const wrap = $('#todaySummary');
-    if(!wrap) return;
-    wrap.innerHTML = '';
-
-    let any = false;
-    for(const v of master.vendors){
-      const has = collectVendorLines(currentDate, v.name).length > 0;
-      if(!has) continue;
-      const txt = buildTextForVendor(currentDate, v.name);
-      any = true;
-
-      const sch = scheduleForVendor(v.name);
-      const deliveryOk = isDeliveryDay(v.name, currentDate);
-      const delDate = deliveryOk ? currentDate : nextDeliveryDate(v.name, currentDate);
-      const dl = cutoffDateTimeForDelivery(v.name, delDate);
-      const delDow = DOW_LABELS[weekdayOf(delDate)];
-      const delLabel = deliveryOk ? `納品：${fmtMD(delDate)}（${delDow}）` : `この日は納品なし → 次回：${fmtMD(delDate)}（${delDow}）`;
-      const deadlineLabel = `締切：${fmtMD(dl.date)} ${dl.time}（${dl.when}）`;
-      const scheduleLine = `${delLabel} ・ ${deadlineLabel}${sch.noHolidays ? ' ・ 祝日NG' : ''}`;
-
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.style.background = 'rgba(249,250,251,.95)';
-      card.style.borderRadius = '18px';
-      card.style.boxShadow = 'none';
-      card.innerHTML = `
-        <div class="split">
-          <div>
-            <div style="font-weight:900">${escapeHtml(v.name)} <span class="badge" style="margin-left:6px">${channelLabel(vendorChannel(v.name))}</span></div>
-            <div class="muted" style="font-size:12px">${escapeHtml(scheduleLine)}</div>
+            <div style="font-weight:bold">${item.name}</div>
+            <div style="font-size:12px; color:var(--muted)">目安: ${item.ideal}${item.unit}</div>
           </div>
           <div class="row">
-            <button class="btn small" data-act="copy" type="button">コピー</button>
-            <button class="btn small" data-act="txt" type="button">TXT保存</button>
-            ${vendorChannel(v.name)==='infomart' ? '<button class="btn small" data-act="csv" type="button">CSV</button>' : ''}
+            <div style="text-align:center">
+              <div style="font-size:10px">在庫</div>
+              <input type="number" class="stockInput" value="${data.stock}" onchange="updateVal('${item.name}', 'stock', this.value)">
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:10px">発注</div>
+              <input type="number" class="qtyInput" value="${data.qty}" onchange="updateVal('${item.name}', 'qty', this.value)">
+            </div>
           </div>
         </div>
-        <div class="hr"></div>
-        <textarea readonly class="mono"></textarea>
       `;
-
-      const ta = card.querySelector('textarea');
-      ta.value = txt;
-
-      card.querySelector('[data-act="copy"]').addEventListener('click', () => copyToClipboard(txt));
-      card.querySelector('[data-act="txt"]').addEventListener('click', () => downloadText(`${currentDate}_${v.name}_発注.txt`, txt));
-
-      const csvBtn = card.querySelector('[data-act="csv"]');
-      if(csvBtn){
-        csvBtn.addEventListener('click', () => {
-          const rows = buildCSVRowsForVendor(currentDate, v.name);
-          downloadCSV(`${currentDate}_${v.name}_発注.csv`, rows);
-          toast('CSVを保存しました');
-        });
-      }
-
-      wrap.appendChild(card);
-    }
-
-    if(!any){
-      wrap.innerHTML = `<div class="muted">まだ入力がありません。業者タブで数量を入れるとここにまとまります。</div>`;
-    }
-
-    if(scrollTop) window.scrollTo({top:0, behavior:'smooth'});
+    }).join('');
   }
 
-  function renderHistory(){
-    const list = $('#historyList');
-    if(!list) return;
-    list.innerHTML = '';
-    const dates = Object.keys(orders).sort((a,b)=> b.localeCompare(a));
-    if(!dates.length){
-      list.innerHTML = `<div class="muted">履歴なし</div>`;
-      return;
+  function updateVal(itemName, field, val) {
+    const date = document.getElementById('dateInput').value;
+    if(!orders[date]) orders[date] = {};
+    if(!orders[date][currentVendor]) orders[date][currentVendor] = {};
+    if(!orders[date][currentVendor][itemName]) orders[date][currentVendor][itemName] = {qty:0, stock:0};
+    
+    orders[date][currentVendor][itemName][field] = Number(val);
+    localStorage.setItem('orders', JSON.stringify(orders));
+    
+    if(config.autoSync) {
+      clearTimeout(window.syncTimer);
+      window.syncTimer = setTimeout(syncToCloud, 2000);
     }
-
-    for(const d of dates){
-      const day = orders[d] || {};
-      let lines = 0;
-      for(const v of Object.keys(day)){
-        lines += Object.values(day[v]||{}).reduce((acc,x)=> acc + (Number(x.qty||0)>0?1:0), 0);
-      }
-      const el = document.createElement('div');
-      el.className = 'vendorItem';
-      el.innerHTML = `
-        <div>
-          <div class="name">${escapeHtml(d)}</div>
-          <div class="muted" style="font-size:12px">入力 ${lines} 件</div>
-        </div>
-        <div class="row" style="gap:8px">
-          <span class="badge">読み込む</span>
-          <span class="badge">→</span>
-        </div>
-      `;
-      el.addEventListener('click', () => {
-        $('#date').value = d;
-        onDateChange(d);
-        setTab('today');
-      });
-      list.appendChild(el);
-    }
-  }
-
-  // ---------- modals ----------
-  let editingItem = null; // {vendorName, itemName}
-  let editingVendorName = null;
-
-  function showModal(el){ el.style.display = 'flex'; }
-  function hideModal(el){ el.style.display = 'none'; }
-
-  // Item modal
-  const itemModal = $('#itemModal');
-  const itemModalTitle = $('#itemModalTitle');
-  const itemNameView = $('#itemNameView');
-  const itemUnitInput = $('#itemUnitInput');
-  const itemMemoInput = $('#itemMemoInput');
-  const itemIdealInput = $('#itemIdealInput');
-
-  function openItemModal(vendorName, itemName){
-    const v = master.vendors.find(x => x.name === vendorName);
-    const it = v?.items?.find(x => x.name === itemName);
-    if(!v || !it){ toast('商品が見つかりません'); return; }
-    editingItem = {vendorName, itemName};
-    itemModalTitle.textContent = `商品設定：${vendorName}`;
-    itemNameView.value = it.name;
-    itemUnitInput.value = it.unit || '';
-    itemMemoInput.value = it.memo || '';
-    itemIdealInput.value = (it.idealStock==null? '' : String(it.idealStock));
-    showModal(itemModal);
-  }
-  function closeItemModal(){ editingItem = null; hideModal(itemModal); }
-
-  function saveItemModal(){
-    if(!editingItem) return;
-    const v = master.vendors.find(x => x.name === editingItem.vendorName);
-    const it = v?.items?.find(x => x.name === editingItem.itemName);
-    if(!v || !it){ toast('保存できません'); return; }
-    it.unit = String(itemUnitInput.value || '').trim();
-    it.memo = String(itemMemoInput.value || '').trim();
-    const raw = String(itemIdealInput.value || '').trim();
-    if(raw === '') it.idealStock = '';
-    else{
-      const n = Math.max(0, Math.min(999999, Math.round(Number(raw))));
-      it.idealStock = Number.isFinite(n) ? String(n) : '';
-    }
-
-    for(const d of Object.keys(orders)){
-      const e = orders[d]?.[v.name]?.[it.name];
-      if(e){ e.unit = it.unit || ''; e.memo = it.memo || ''; }
-    }
-
-    setMaster(master);
-    scheduleSave();
-    renderVendors();
     renderItems();
-    renderTodaySummary(false);
-    toast('保存しました');
-    closeItemModal();
   }
 
-  function deleteItem(){
-    if(!editingItem) return;
-    const ok = confirm('この商品を削除します。よろしいですか？');
-    if(!ok) return;
-    const v = master.vendors.find(x => x.name === editingItem.vendorName);
-    if(!v) return;
-    v.items = (v.items || []).filter(x => x.name !== editingItem.itemName);
-    for(const d of Object.keys(orders)){
-      if(orders[d]?.[v.name]?.[editingItem.itemName]){
-        delete orders[d][v.name][editingItem.itemName];
+  // --- ユーティリティ ---
+  function setStatus(type, text) {
+    const el = document.getElementById('syncStatus');
+    el.innerText = text;
+    el.className = `status-badge status-${type === 'ok' ? 'ok' : 'sync'}`;
+  }
+
+  function switchTab(tabId) {
+    document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
+    document.getElementById(`view-${tabId}`).style.display = 'block';
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    if(tabId === 'today') renderTodaySummary();
+  }
+
+  function saveSettings() {
+    config.gasUrl = document.getElementById('gasUrl').value;
+    config.storeId = document.getElementById('storeId').value;
+    config.autoSync = document.getElementById('autoSync').checked;
+    localStorage.setItem('orderConfig', JSON.stringify(config));
+    alert('設定を保存しました');
+  }
+
+  function renderTodaySummary() {
+    const date = document.getElementById('dateInput').value;
+    const dayData = orders[date] || {};
+    let html = "";
+    for(let v in dayData) {
+      html += `<h4>【${v}】</h4>`;
+      for(let i in dayData[v]) {
+        if(dayData[v][i].qty > 0) html += `<p>${i}: ${dayData[v][i].qty}</p>`;
       }
     }
-    setMaster(master);
-    setOrders(orders);
-    renderVendors();
-    renderItems();
-    renderTodaySummary(false);
-    renderHistory();
-    toast('削除しました');
-    closeItemModal();
+    document.getElementById('todaySummary').innerHTML = html || "発注データはありません";
   }
-
-  $('#itemModalClose').addEventListener('click', closeItemModal);
-  $('#itemModalCancel').addEventListener('click', closeItemModal);
-  $('#itemModalSave').addEventListener('click', saveItemModal);
-  $('#itemDeleteBtn').addEventListener('click', deleteItem);
-  itemModal.addEventListener('click', (e) => { if(e.target === itemModal) closeItemModal(); });
-
-  // Vendor schedule modal
-  const vendorModal = $('#vendorModal');
-  const vendorNameView = $('#vendorNameView');
-  const vendorDaysGrid = $('#vendorDaysGrid');
-  const vendorCutoffTime = $('#vendorCutoffTime');
-  const vendorNoHolidays = $('#vendorNoHolidays');
-  const vendorBlockDates = $('#vendorBlockDates');
-
-  function buildDaysGrid(selectedDays){
-    vendorDaysGrid.innerHTML = '';
-    for(let i=0;i<7;i++){
-      const box = document.createElement('label');
-      box.className = 'dayBox';
-      box.innerHTML = `<div style="font-weight:900">${DOW_LABELS[i]}</div><input type="checkbox" value="${i}" ${selectedDays.includes(i)?'checked':''} />`;
-      vendorDaysGrid.appendChild(box);
-    }
-  }
-
-  function parseBlockDates(text){
-    const parts = String(text||'').split(/[\s,]+/).map(s=>s.trim()).filter(Boolean);
-    const out = [];
-    for(const s of parts){
-      const t = s.slice(0,10);
-      if(/^\d{4}-\d{2}-\d{2}$/.test(t)) out.push(t);
-    }
-    return Array.from(new Set(out)).sort();
-  }
-
-  function openVendorModal(vendorName){
-    const v = getVendorObj(vendorName);
-    if(!v){ toast('業者が見つかりません'); return; }
-    editingVendorName = vendorName;
-    vendorNameView.value = vendorName;
-    const sch = scheduleForVendor(vendorName);
-    buildDaysGrid(sch.deliveryDays);
-    vendorCutoffTime.value = sch.cutoffTime || '03:00';
-    $$("input[name='cutoffOffset']").forEach(r => r.checked = (Number(r.value) === sch.cutoffOffsetDays));
-    vendorNoHolidays.checked = !!sch.noHolidays;
-    vendorBlockDates.value = (sch.blockDates || []).join(', ');
-    showModal(vendorModal);
-  }
-
-  function closeVendorModal(){ editingVendorName = null; hideModal(vendorModal); }
-
-  function saveVendorModal(){
-    if(!editingVendorName) return;
-    const v = getVendorObj(editingVendorName);
-    if(!v){ toast('保存できません'); return; }
-    const days = Array.from(vendorDaysGrid.querySelectorAll('input[type=checkbox]'))
-      .filter(cb => cb.checked)
-      .map(cb => Number(cb.value))
-      .filter(n => Number.isFinite(n) && n>=0 && n<=6);
-    const cutoffOffsetDays = Number($$("input[name='cutoffOffset']").find(r=>r.checked)?.value || 0);
-    const cutoffTime = String(vendorCutoffTime.value || '03:00');
-    const noHolidays = !!vendorNoHolidays.checked;
-    const blockDates = parseBlockDates(vendorBlockDates.value);
-
-    v.schedule = {
-      deliveryDays: normalizeDays(days, scheduleForVendor(editingVendorName).deliveryDays),
-      cutoffTime,
-      cutoffOffsetDays: (cutoffOffsetDays===1?1:0),
-      noHolidays,
-      blockDates,
-    };
-
-    setMaster(master);
-    renderVendors();
-    renderTodaySummary(false);
-    renderVendorScheduleList();
-    toast('保存しました');
-    closeVendorModal();
-  }
-
-  $('#vendorModalClose').addEventListener('click', closeVendorModal);
-  $('#vendorModalCancel').addEventListener('click', closeVendorModal);
-  $('#vendorModalSave').addEventListener('click', saveVendorModal);
-  vendorModal.addEventListener('click', (e) => { if(e.target === vendorModal) closeVendorModal(); });
-
-  function renderVendorScheduleList(){
-    const list = $('#vendorScheduleList');
-    if(!list) return;
-    list.innerHTML = '';
-    master.vendors.forEach(v => {
-      const sch = scheduleForVendor(v.name);
-      const el = document.createElement('div');
-      el.className = 'vendorItem';
-      el.innerHTML = `
-        <div>
-          <div class="name">${escapeHtml(v.name)}</div>
-          <div class="muted" style="font-size:12px">納品：${escapeHtml(daysSummary(sch.deliveryDays))} ・ 締切：${escapeHtml(cutoffLabel(v.name))}${sch.noHolidays?' ・ 祝日NG':''}</div>
-        </div>
-        <div class="row" style="gap:8px">
-          <span class="badge">編集</span>
-          <span class="badge">→</span>
-        </div>
-      `;
-      el.addEventListener('click', () => openVendorModal(v.name));
-      list.appendChild(el);
-    });
-    if(master.vendors.length===0) list.innerHTML = `<div class="muted">業者がありません</div>`;
-  }
-
-  function renderSettings(){
-    renderVendorScheduleList();
-  }
-
-  // ---------- actions ----------
-  function onDateChange(d){
-    currentDate = d;
-    ensureDay(currentDate);
-    scheduleSave();
-    renderVendors();
-    renderItems();
-    renderTodaySummary(false);
-    renderHistory();
-    if(cloudReady()) cloudPull(currentDate, true);
-  }
-
-  function setSortMode(on){
-    sortMode = !!on;
-    const btn = $('#sortItemsBtn');
-    if(btn) btn.textContent = sortMode ? '並べ替え完了' : '並べ替え';
-    const search = $('#itemSearch');
-    const add = $('#addItemBtn');
-    if(search){
-      search.disabled = sortMode;
-      if(sortMode) search.value = '';
-    }
-    if(add) add.disabled = sortMode;
-    if(sortMode) toast('並べ替え：ドラッグ or ↑↓');
-  }
-
-  function setTab(name){
-    $$('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
-    $$('.view').forEach(v => v.style.display = 'none');
-    const target = $('#view-' + name);
-    if(target) target.style.display = 'block';
-    if(name !== 'vendors' && sortMode) setSortMode(false);
-    if(name==='today') renderTodaySummary();
-    if(name==='history') renderHistory();
-    if(name==='settings') renderSettings();
-  }
-
-  // ---------- PWA install ----------
-  let deferredPrompt = null;
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    const btn = $('#installBtn');
-    if(btn) btn.style.display = 'inline-block';
-  });
-  $('#installBtn').addEventListener('click', async () => {
-    if(!deferredPrompt){ toast('この端末では表示できません'); return; }
-    deferredPrompt.prompt();
-    const choice = await deferredPrompt.userChoice;
-    if(choice?.outcome === 'accepted') toast('追加しました');
-    deferredPrompt = null;
-    $('#installBtn').style.display = 'none';
-  });
-
-  // ---------- boot ----------
-  async function boot(){
-    await initMaster();
-    migrateMaster();
-
-    // date
-    $('#date').value = currentDate;
-    $('#date').addEventListener('change', (e) => onDateChange(e.target.value));
-
-    // quick date controls
-    const setAndChange = (d) => { $('#date').value = d; onDateChange(d); };
-    $('#prevDayBtn').addEventListener('click', () => setAndChange(addDays(currentDate, -1)));
-    $('#nextDayBtn').addEventListener('click', () => setAndChange(addDays(currentDate, 1)));
-    $('#todayBtn').addEventListener('click', () => setAndChange(localISODate()));
-
-    // tabs
-    $$('.tab').forEach(t => t.addEventListener('click', () => setTab(t.dataset.tab)));
-
-    // cloud
-    initCloudUI();
-    if(cloudReady()) cloudPull(currentDate, true);
-
-    // search
-    $('#itemSearch').addEventListener('input', () => renderItems());
-
-    // to today
-    $('#toTodayBtn').addEventListener('click', () => setTab('today'));
-
-    // clear vendor（発注/在庫どっちも0に）
-    $('#clearVendorBtn').addEventListener('click', () => {
-      if(!currentVendor) return;
-      ensureDay(currentDate);
-      const v = master.vendors.find(x => x.name === currentVendor);
-      if(!v) return;
-      const now = Date.now();
-      for(const it of v.items){
-        if(!orders[currentDate][currentVendor][it.name]) orders[currentDate][currentVendor][it.name] = {qty:0, stock:0, unit:it.unit||'', memo:it.memo||'', updatedAt:0};
-        orders[currentDate][currentVendor][it.name].qty = 0;
-        orders[currentDate][currentVendor][it.name].stock = 0;
-        orders[currentDate][currentVendor][it.name].updatedAt = now;
-      }
-      scheduleSave();
-      scheduleCloudPush();
-      renderItems();
-      renderVendors();
-      renderTodaySummary(false);
-      toast('この業者を0にしました');
-    });
-
-    // clear day（発注/在庫どっちも0に）
-    $('#clearDayBtn').addEventListener('click', () => {
-      ensureDay(currentDate);
-      const now = Date.now();
-      for(const v of master.vendors){
-        const entries = orders[currentDate][v.name] || {};
-        for(const it of v.items){
-          if(!entries[it.name]) entries[it.name] = {qty:0, stock:0, unit:it.unit||'', memo:it.memo||'', updatedAt:0};
-          entries[it.name].qty = 0;
-          entries[it.name].stock = 0;
-          entries[it.name].updatedAt = now;
-        }
-      }
-      scheduleSave();
-      scheduleCloudPush();
-      renderItems();
-      renderVendors();
-      renderTodaySummary(false);
-      toast('今日を全部0にしました');
-    });
-
-    // copy all
-    $('#copyAllBtn').addEventListener('click', () => copyToClipboard(buildAllText(currentDate)));
-
-    // csv all
-    $('#csvAllBtn').addEventListener('click', () => {
-      const rows = buildAllCSVRows(currentDate);
-      downloadCSV(`${currentDate}_発注.csv`, rows);
-      toast('CSVを保存しました');
-    });
-
-    // add item
-    $('#addItemBtn').addEventListener('click', () => {
-      if(!currentVendor){ toast('業者を選んでください'); return; }
-      const name = prompt('商品名（例：無塩バター）');
-      if(!name) return;
-      const unit = prompt('単位（例：kg / 本 / 袋 / ケース など）※空でもOK') || '';
-      const memo = prompt('メモ（任意）') || '';
-      const v = master.vendors.find(x => x.name === currentVendor);
-      if(!v) return;
-      const exists = v.items.some(it => it.name === name.trim());
-      if(exists){ toast('同名の商品があります'); return; }
-      v.items.push({name:name.trim(), unit:unit.trim(), memo:memo.trim(), idealStock:''});
-      setMaster(master);
-      renderVendors();
-      renderItems();
-      toast('商品を追加しました');
-    });
-
-    // sort mode (reorder)
-    $('#sortItemsBtn').addEventListener('click', () => {
-      if(!currentVendor){ toast('業者を選んでください'); return; }
-      setSortMode(!sortMode);
-      renderItems();
-    });
-
-    // wipe all
-    $('#wipeAllBtn').addEventListener('click', () => {
-      const ok = confirm('端末内の「発注履歴」をすべて削除します。よろしいですか？');
-      if(!ok) return;
-      orders = {};
-      setOrders(orders);
-      renderHistory();
-      renderTodaySummary(false);
-      renderVendors();
-      renderItems();
-      toast('削除しました');
-    });
-
-    // settings export/import/reset
-    $('#exportMasterBtn').addEventListener('click', () => {
-      const text = JSON.stringify(master, null, 2);
-      downloadText(`master_${localISODate()}.json`, text);
-      toast('書き出しました');
-    });
-
-    $('#importMaster').addEventListener('change', async (e) => {
-      const file = e.target.files?.[0];
-      if(!file) return;
-      const text = await file.text();
-      try{
-        const m = JSON.parse(text);
-        if(!m?.vendors) throw new Error('format');
-        master = m;
-        migrateMaster();
-        setMaster(master);
-        renderVendors();
-        renderItems();
-        renderTodaySummary(false);
-        toast('読み込みました');
-      }catch(err){
-        toast('読み込みに失敗');
-      }finally{
-        e.target.value = '';
-      }
-    });
-
-    $('#resetMasterBtn').addEventListener('click', async () => {
-      const ok = confirm('マスターを初期状態に戻します（追加した商品は消えます）。よろしいですか？');
-      if(!ok) return;
-      localStorage.removeItem(KEY_MASTER);
-      await initMaster();
-      migrateMaster();
-      renderVendors();
-      renderItems();
-      renderTodaySummary(false);
-      toast('戻しました');
-    });
-
-    // initial render
-    ensureDay(currentDate);
-    renderVendors();
-    renderItems();
-    renderTodaySummary(false);
-    renderHistory();
-
-    // service worker
-    if('serviceWorker' in navigator){
-      try{ await navigator.serviceWorker.register('./service-worker.js'); }catch(e){}
-    }
-
-    markSaved();
-  }
-
-  boot();
-  </script>
+</script>
 </body>
 </html>
