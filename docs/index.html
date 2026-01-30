@@ -3,81 +3,130 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>発注アシスト Pro (修正版)</title>
+  <title>発注アシスト Cloud Biz</title>
   <style>
     :root {
-      --primary: #16a34a; --bg: #f3f4f6; --card: #ffffff; --text: #1f2937; --muted: #6b7280; --warn: #f59e0b;
+      --primary: #2563eb; --accent: #16a34a; --bg: #f8fafc;
+      --card: #ffffff; --text: #1e293b; --muted: #64748b;
+      --border: #e2e8f0; --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
     }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    body { margin: 0; font-family: sans-serif; background: var(--bg); color: var(--text); padding-bottom: 80px; overscroll-behavior: none; }
+    body {
+      margin: 0; font-family: 'Segoe UI', Meiryo, sans-serif;
+      background: var(--bg); color: var(--text); line-height: 1.5;
+    }
+
+    /* --- Layout --- */
     header {
-      position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,0.9);
-      backdrop-filter: blur(10px); padding: 12px 16px; border-bottom: 1px solid #e5e7eb;
+      position: sticky; top: 0; z-index: 100;
+      background: #fff; padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow);
+    }
+    .main-layout {
+      display: grid; grid-template-columns: 200px 1fr; height: calc(100vh - 130px);
+    }
+    @media (max-width: 768px) {
+      .main-layout { grid-template-columns: 1fr; }
+      .sidebar { display: none; } /* スマホ時はセレクター形式に切り替え可 */
+    }
+
+    /* --- UI Components --- */
+    .sidebar { background: #fff; border-right: 1px solid var(--border); padding: 10px; overflow-y: auto; }
+    .content { padding: 16px; overflow-y: auto; background: var(--bg); }
+    
+    .vendor-item {
+      padding: 12px 16px; border-radius: 8px; cursor: pointer;
+      font-weight: bold; margin-bottom: 4px; transition: 0.2s;
+      color: var(--muted); border: 1px solid transparent;
+    }
+    .vendor-item.active {
+      background: #eff6ff; color: var(--primary); border-color: var(--primary);
+    }
+
+    .item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+    .item-card {
+      background: #fff; padding: 16px; border-radius: 12px;
+      border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       display: flex; justify-content: space-between; align-items: center;
     }
-    .date-badge { background: #fff; padding: 6px 12px; border-radius: 999px; border: 1px solid #ddd; display: flex; align-items: center; }
-    #dateInput { border: none; font-size: 1em; font-weight: bold; outline: none; background: transparent; }
-    .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #ccc; margin-right: 5px; }
-    .online { background: var(--primary); }
-    .syncing { background: var(--warn); animation: blink 1s infinite; }
-    @keyframes blink { 50% { opacity: 0.3; } }
+    .item-card.has-qty { border-color: var(--accent); background: #f0fdf4; }
 
-    main { padding: 12px; max-width: 800px; margin: 0 auto; }
-    .vendor-selector { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 16px; }
-    .vendor-chip { white-space: nowrap; padding: 10px 20px; background: #fff; border-radius: 999px; border: 1px solid #e5e7eb; font-weight: bold; color: var(--muted); cursor: pointer; }
-    .vendor-chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .qty-ctrl { display: flex; align-items: center; gap: 10px; }
+    .btn-qty {
+      width: 40px; height: 40px; border-radius: 8px; border: 1px solid #ddd;
+      background: #fff; font-size: 1.2em; cursor: pointer; font-weight: bold;
+    }
+    .qty-num { font-size: 1.3em; font-weight: 800; width: 30px; text-align: center; }
 
-    .item-card { background: var(--card); border-radius: 16px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: grid; grid-template-columns: 1fr auto; align-items: center; }
-    .item-card.has-qty { border-left: 6px solid var(--primary); }
-    .item-info .name { font-weight: 800; font-size: 1.1em; }
-    .counter { display: flex; align-items: center; gap: 8px; background: #f9fafb; padding: 6px; border-radius: 12px; }
-    .btn-qty { width: 44px; height: 44px; border-radius: 10px; border: none; background: #fff; font-size: 1.5em; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1); cursor: pointer; }
-    .qty-display { width: 40px; text-align: center; font-size: 1.2em; font-weight: 900; }
+    /* --- Common --- */
+    .status-badge { font-size: 11px; padding: 4px 8px; border-radius: 4px; font-weight: 800; }
+    .syncing { background: #fef9c3; color: #854d0e; }
+    .online { background: #dcfce7; color: #166534; }
 
-    nav { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #e5e7eb; display: grid; grid-template-columns: repeat(3, 1fr); padding: 10px 0 25px; }
-    .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--muted); cursor: pointer; font-size: 0.8em; font-weight: bold; }
-    .nav-item.active { color: var(--primary); }
+    nav {
+      position: fixed; bottom: 0; width: 100%; background: #fff;
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      padding: 10px 0 20px; border-top: 1px solid var(--border);
+    }
+    .nav-btn { text-align: center; font-size: 12px; font-weight: bold; color: var(--muted); cursor: pointer; }
+    .nav-btn.active { color: var(--primary); }
+
+    .input-group { margin-bottom: 15px; }
+    .input-group label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; }
+    input, select { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; }
   </style>
 </head>
 <body>
 
 <header>
-  <div class="date-badge">
-    <input type="date" id="dateInput">
+  <div style="display:flex; flex-direction:column;">
+    <input type="date" id="dateInput" style="font-weight:bold; border:none; padding:0; width:auto;">
+    <span id="syncStatus" class="status-badge online">READY</span>
   </div>
-  <div style="display: flex; align-items: center; font-size: 0.8em; font-weight: bold;">
-    <span class="status-dot" id="dot"></span>
-    <span id="syncText">READY</span>
+  <div style="text-align:right">
+    <label style="font-size:10px; display:block">担当者</label>
+    <select id="userSelect" style="width:120px; padding:4px; font-size:12px;"></select>
   </div>
 </header>
 
 <main>
-  <div id="view-vendors" class="view">
-    <div class="vendor-selector" id="vendorSelector"></div>
-    <div id="itemList"></div>
-  </div>
-
-  <div id="view-today" class="view" style="display:none">
-    <div style="background:#fff; padding:16px; border-radius:16px;" id="todaySummary"></div>
-  </div>
-
-  <div id="view-settings" class="view" style="display:none">
-    <div style="background:#fff; padding:16px; border-radius:16px;">
-      <label style="font-size: 0.8em; font-weight: bold;">GAS WebアプリURL</label>
-      <input type="text" id="gasUrl" style="width:100%; padding:10px; margin-top:5px; border-radius:8px; border:1px solid #ddd;">
-      <button onclick="saveSettings()" style="width:100%; margin-top:15px; padding:12px; background:var(--text); color:#fff; border-radius:8px; border:none; font-weight:bold;">設定を保存</button>
+  <section id="view-main" class="view main-layout">
+    <div class="sidebar" id="vendorList"></div>
+    <div class="content">
+      <h2 id="currentVendorName" style="margin-top:0">業者を選択</h2>
+      <div id="itemList" class="item-grid"></div>
     </div>
-  </div>
+  </section>
+
+  <section id="view-settings" class="view" style="display:none; padding:20px;">
+    <div style="max-width:500px; margin:0 auto; background:#fff; padding:20px; border-radius:12px;">
+      <h3>システム設定</h3>
+      <div class="input-group">
+        <label>GAS WebアプリURL</label>
+        <input type="text" id="gasUrl" placeholder="https://script.google.com/...">
+      </div>
+      <div class="input-group">
+        <label>スタッフ名（カンマ区切り）</label>
+        <input type="text" id="staffList" placeholder="田中, 佐藤, 鈴木">
+      </div>
+      <button onclick="saveSettings()" style="width:100%; background:var(--primary); color:#fff; padding:12px; border:none; border-radius:6px; font-weight:bold;">保存して適用</button>
+    </div>
+  </section>
+
+  <section id="view-list" class="view" style="display:none; padding:20px;">
+    <div id="summaryContent" style="max-width:600px; margin:0 auto; background:#fff; padding:20px; border-radius:12px;"></div>
+  </section>
 </main>
 
 <nav>
-  <div class="nav-item active" onclick="switchTab('vendors', this)"><span>🛒 発注</span></div>
-  <div class="nav-item" onclick="switchTab('today', this)"><span>📋 リスト</span></div>
-  <div class="nav-item" onclick="switchTab('settings', this)"><span>⚙️ 設定</span></div>
+  <div class="nav-btn active" onclick="switchTab('main', this)">🛒 発注</div>
+  <div class="nav-btn" onclick="switchTab('list', this)">📋 確認</div>
+  <div class="nav-btn" onclick="switchTab('settings', this)">⚙️ 設定</div>
 </nav>
 
 <script>
-  let orders = {}; 
+  let orders = {};
   let currentVendor = "";
   let master = {
     vendors: [
@@ -87,97 +136,88 @@
     ]
   };
 
-  let config = JSON.parse(localStorage.getItem('orderConfig_v3') || '{"gasUrl":"","storeId":"default"}');
+  let config = JSON.parse(localStorage.getItem('orderConfig_v4') || '{"gasUrl":"","staff":"担当者未設定"}');
 
-  // --- 初期起動 ---
   window.onload = async () => {
     const today = new Date().toISOString().split('T')[0];
-    const dateInput = document.getElementById('dateInput');
-    dateInput.value = today;
+    document.getElementById('dateInput').value = today;
     document.getElementById('gasUrl').value = config.gasUrl;
-
-    // 日付変更イベントをバインド
-    dateInput.addEventListener('change', handleDateChange);
-
-    loadLocalOrders();
-    if(config.gasUrl) await pullFromCloud(); 
-    renderVendorSelector();
-    selectVendor(master.vendors[0].name);
+    document.getElementById('staffList').value = config.staff;
+    
+    updateUserSelect();
+    document.getElementById('dateInput').addEventListener('change', handleDateChange);
+    
+    await loadInitialData();
+    renderVendors();
   };
 
-  // --- 日付変更時のコアロジック (ここが修正の肝) ---
-  async function handleDateChange() {
+  // --- データ管理コア ---
+  async function loadInitialData() {
     setSyncStatus('syncing', 'データ読込中...');
-    const newDate = document.getElementById('dateInput').value;
+    const saved = localStorage.getItem('orders_v4');
+    if(saved) orders = JSON.parse(saved);
     
-    // 1. まずメモリ上の orders ではなく、最新のローカルストレージを読み直す
-    loadLocalOrders();
-    
-    // 2. クラウド設定があるなら、その日付のデータを取得
     if(config.gasUrl) {
-      await pullFromCloud(); 
+      await pullFromCloud(); // クラウドから最新を取得
     }
-    
-    // 3. 描画
-    renderItems();
-    if(document.getElementById('view-today').style.display !== 'none') renderTodaySummary();
+    setSyncStatus('online', '同期済み');
   }
 
-  function loadLocalOrders() {
-    const saved = localStorage.getItem('orders_v3');
-    orders = saved ? JSON.parse(saved) : {};
+  async function handleDateChange() {
+    setSyncStatus('syncing', '日付変更中...');
+    // 日付変更時はまずクラウドを「待機」して取得
+    await pullFromCloud();
+    renderItems();
   }
 
   async function pullFromCloud() {
-    if(!config.gasUrl) return;
     const date = document.getElementById('dateInput').value;
+    if(!config.gasUrl) return;
     try {
-      const res = await fetch(`${config.gasUrl}?date=${date}&storeId=${config.storeId}`);
+      const res = await fetch(`${config.gasUrl}?date=${date}&storeId=default`);
       const result = await res.json();
-      
-      // 重要：クラウドにデータがある場合のみマージ。ない場合は上書きせずローカルを維持
-      if(result.data && result.data !== "{}" && result.data !== "") {
+      if(result.data && result.data !== "{}") {
         orders[date] = JSON.parse(result.data);
-        localStorage.setItem('orders_v3', JSON.stringify(orders));
-        setSyncStatus('online', '最新同期済');
+        localStorage.setItem('orders_v4', JSON.stringify(orders));
       } else {
-        setSyncStatus('online', '新規データ入力可');
+        // クラウドにデータがない場合はメモリをリセット（上書きはしない）
+        if(!orders[date]) orders[date] = {};
       }
-    } catch(e) {
-      setSyncStatus('error', 'オフライン表示');
-    }
-    renderItems();
+    } catch(e) { console.error("Cloud Error", e); }
+    setSyncStatus('online', 'クラウド同期済');
   }
 
   async function syncToCloud() {
-    if(!config.gasUrl) return;
-    setSyncStatus('syncing', '保存中...');
     const date = document.getElementById('dateInput').value;
+    if(!config.gasUrl || !orders[date]) return;
+    setSyncStatus('syncing', '保存中...');
     try {
       await fetch(config.gasUrl, {
         method: 'POST',
         body: JSON.stringify({
-          date: date, storeId: config.storeId,
-          data: JSON.stringify(orders[date] || {})
+          date: date,
+          data: JSON.stringify(orders[date]),
+          user: document.getElementById('userSelect').value
         })
       });
       setSyncStatus('online', '保存完了');
-    } catch(e) {
-      setSyncStatus('error', '保存失敗');
-    }
+    } catch(e) { setSyncStatus('online', 'オフライン保存'); }
   }
 
-  // --- 描画・操作 ---
-  function renderVendorSelector() {
-    const container = document.getElementById('vendorSelector');
+  // --- UI制御 ---
+  function renderVendors() {
+    const container = document.getElementById('vendorList');
     container.innerHTML = master.vendors.map(v => `
-      <div class="vendor-chip ${v.name === currentVendor ? 'active' : ''}" onclick="selectVendor('${v.name}')">${v.name}</div>
+      <div class="vendor-item ${v.name === currentVendor ? 'active' : ''}" onclick="selectVendor('${v.name}')">
+        ${v.name}
+      </div>
     `).join('');
   }
 
   function selectVendor(name) {
     currentVendor = name;
-    renderVendorSelector();
+    document.getElementById('currentVendorName').innerText = name;
+    renderVendors();
     renderItems();
   }
 
@@ -185,19 +225,19 @@
     const date = document.getElementById('dateInput').value;
     const vendor = master.vendors.find(v => v.name === currentVendor);
     const container = document.getElementById('itemList');
-    if(!vendor) return;
+    if(!vendor) return container.innerHTML = "業者を選択してください";
 
     container.innerHTML = vendor.items.map(item => {
-      const data = (orders[date]?.[currentVendor]?.[item.name]) || {qty:0, stock:0};
+      const qty = orders[date]?.[currentVendor]?.[item.name]?.qty || 0;
       return `
-        <div class="item-card ${data.qty > 0 ? 'has-qty' : ''}">
-          <div class="item-info">
-            <div class="name">${item.name}</div>
-            <div style="font-size:0.8em; color:var(--muted)">単位: ${item.unit}</div>
+        <div class="item-card ${qty > 0 ? 'has-qty' : ''}">
+          <div>
+            <div style="font-weight:bold; font-size:1.1em;">${item.name}</div>
+            <div style="color:var(--muted); font-size:12px;">単位: ${item.unit}</div>
           </div>
-          <div class="counter">
+          <div class="qty-ctrl">
             <button class="btn-qty" onclick="changeQty('${item.name}', -1)">-</button>
-            <div class="qty-display">${data.qty}</div>
+            <div class="qty-num">${qty}</div>
             <button class="btn-qty" onclick="changeQty('${item.name}', 1)">+</button>
           </div>
         </div>
@@ -209,50 +249,61 @@
     const date = document.getElementById('dateInput').value;
     if(!orders[date]) orders[date] = {};
     if(!orders[date][currentVendor]) orders[date][currentVendor] = {};
-    if(!orders[date][currentVendor][itemName]) orders[date][currentVendor][itemName] = {qty:0, stock:0};
-    
+    if(!orders[date][currentVendor][itemName]) orders[date][currentVendor][itemName] = {qty:0};
+
     orders[date][currentVendor][itemName].qty = Math.max(0, orders[date][currentVendor][itemName].qty + delta);
     
-    // 保存と同期
-    localStorage.setItem('orders_v3', JSON.stringify(orders));
+    localStorage.setItem('orders_v4', JSON.stringify(orders));
     renderItems();
+    
     clearTimeout(window.syncTimer);
     window.syncTimer = setTimeout(syncToCloud, 2000);
   }
 
-  function switchTab(tabId, el) {
-    document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
-    document.getElementById(`view-${tabId}`).style.display = 'block';
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    el.classList.add('active');
-    if(tabId === 'today') renderTodaySummary();
-  }
-
-  function renderTodaySummary() {
-    const date = document.getElementById('dateInput').value;
-    const dayData = orders[date] || {};
-    let html = `<h3>${date} の発注</h3>`;
-    for(let v in dayData) {
-      let items = Object.entries(dayData[v]).filter(([n, d]) => d.qty > 0);
-      if(items.length > 0) {
-        html += `<p><b>■ ${v}</b><br>${items.map(([n, d]) => `・${n}: ${d.qty}`).join('<br>')}</p>`;
-      }
-    }
-    document.getElementById('todaySummary').innerHTML = html || "発注なし";
-  }
-
-  function setSyncStatus(type, text) {
-    const dot = document.getElementById('dot');
-    const txt = document.getElementById('syncText');
-    txt.innerText = text;
-    dot.className = 'status-dot ' + (type === 'syncing' ? 'syncing' : (type === 'online' ? 'online' : ''));
+  function updateUserSelect() {
+    const list = config.staff.split(',').map(s => s.trim());
+    const select = document.getElementById('userSelect');
+    select.innerHTML = list.map(s => `<option value="${s}">${s}</option>`).join('');
   }
 
   function saveSettings() {
     config.gasUrl = document.getElementById('gasUrl').value;
-    localStorage.setItem('orderConfig_v3', JSON.stringify(config));
-    alert('設定を保存しました。');
-    pullFromCloud();
+    config.staff = document.getElementById('staffList').value;
+    localStorage.setItem('orderConfig_v4', JSON.stringify(config));
+    updateUserSelect();
+    alert("設定を保存しました");
+  }
+
+  function switchTab(tabId, el) {
+    document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
+    document.getElementById(`view-${tabId}`).style.display = (tabId === 'main') ? 'grid' : 'block';
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    if(tabId === 'list') renderSummary();
+  }
+
+  function renderSummary() {
+    const date = document.getElementById('dateInput').value;
+    const dayData = orders[date] || {};
+    let html = `<h2>${date} の発注内容</h2>`;
+    let hasData = false;
+    for(let v in dayData) {
+      const items = Object.entries(dayData[v]).filter(([n, d]) => d.qty > 0);
+      if(items.length > 0) {
+        hasData = true;
+        html += `<div style="margin-bottom:20px; border-left:4px solid var(--primary); padding-left:15px;">
+          <h3 style="margin:0; color:var(--primary);">${v}</h3>
+          ${items.map(([n, d]) => `<div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding:5px 0;"><span>${n}</span><b>${d.qty}</b></div>`).join('')}
+        </div>`;
+      }
+    }
+    document.getElementById('summaryContent').innerHTML = hasData ? html : "発注データがありません。";
+  }
+
+  function setSyncStatus(type, text) {
+    const el = document.getElementById('syncStatus');
+    el.innerText = text;
+    el.className = `status-badge ${type}`;
   }
 </script>
 </body>
