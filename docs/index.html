@@ -9,7 +9,704 @@
       --primary: #2563eb; --accent: #16a34a; --bg: #f8fafc;
       --card: #ffffff; --text: #1e293b; --muted: #64748b;
       --border: #e2e8f0; --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    }<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>発注アシスト Cloud Biz (v5)</title>
+  <style>
+    :root {
+      --primary: #2563eb; --accent: #16a34a; --bg: #f8fafc;
+      --card: #ffffff; --text: #1e293b; --muted: #64748b;
+      --border: #e2e8f0; --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
     }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0; font-family: 'Segoe UI', Meiryo, sans-serif;
+      background: var(--bg); color: var(--text); line-height: 1.5;
+      padding-bottom: 60px;
+    }
+
+    header {
+      position: sticky; top: 0; z-index: 100;
+      background: #fff; padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      display: flex; flex-wrap: wrap; align-items: center; gap: 8px; justify-content: space-between;
+    }
+    .header-left { display: flex; flex-direction: column; gap: 4px; }
+    .header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .vendor-select-wrap { display: none; }
+    @media (max-width: 768px) {
+      .vendor-select-wrap { display: block; }
+      .vendor-select-wrap select { min-width: 140px; padding: 8px 10px; font-weight: bold; }
+    }
+
+    .main-layout { display: grid; grid-template-columns: 200px 1fr; min-height: calc(100vh - 180px); }
+    @media (max-width: 768px) {
+      .main-layout { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+    }
+    .sidebar { background: #fff; border-right: 1px solid var(--border); padding: 10px; overflow-y: auto; }
+    .content { padding: 16px; overflow-y: auto; background: var(--bg); }
+
+    .vendor-item {
+      padding: 12px 16px; border-radius: 8px; cursor: pointer;
+      font-weight: bold; margin-bottom: 4px; transition: 0.2s;
+      color: var(--muted); border: 1px solid transparent;
+    }
+    .vendor-item.active { background: #eff6ff; color: var(--primary); border-color: var(--primary); }
+
+    .item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+    .item-card {
+      background: #fff; padding: 16px; border-radius: 12px;
+      border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    }
+    .item-card.has-qty { border-color: var(--accent); background: #f0fdf4; }
+
+    .qty-ctrl { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .btn-qty {
+      min-width: 48px; min-height: 48px; width: 48px; height: 48px;
+      border-radius: 10px; border: 2px solid var(--border);
+      background: #fff; font-size: 1.4em; font-weight: bold; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+      -webkit-user-select: none; user-select: none;
+    }
+    .btn-qty:active { background: var(--bg); }
+    .qty-num { font-size: 1.3em; font-weight: 800; min-width: 32px; text-align: center; }
+
+    .status-badge { font-size: 11px; padding: 4px 8px; border-radius: 4px; font-weight: 800; }
+    .status-ready { background: #e2e8f0; color: #475569; }
+    .status-syncing { background: #fef9c3; color: #854d0e; }
+    .status-saved { background: #dcfce7; color: #166534; }
+    .status-offline { background: #fee2e2; color: #991b1b; }
+    .status-conflict { background: #ffedd5; color: #9a3412; }
+
+    nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: #fff; display: grid; grid-template-columns: repeat(3, 1fr);
+      padding: 10px 0 max(10px, env(safe-area-inset-bottom)); border-top: 1px solid var(--border);
+    }
+    .nav-btn { text-align: center; font-size: 12px; font-weight: bold; color: var(--muted); cursor: pointer; padding: 8px; }
+    .nav-btn.active { color: var(--primary); }
+
+    button { cursor: pointer; }
+    .input-group { margin-bottom: 15px; }
+    .input-group label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; }
+    input, select { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; }
+    .input-error { border-color: #dc2626; }
+    .error-msg { font-size: 12px; color: #dc2626; margin-top: 4px; }
+
+    .summary-block { margin-bottom: 20px; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .summary-block h3 { margin: 0; padding: 12px 16px; background: var(--primary); color: #fff; font-size: 1em; }
+    .summary-block ul { margin: 0; padding: 0; list-style: none; }
+    .summary-block li { padding: 10px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; }
+    .summary-block li:last-child { border-bottom: none; }
+    .copy-btn { margin-top: 10px; padding: 10px 16px; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; }
+    .copy-btn:active { opacity: 0.9; }
+
+    .master-section { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
+    .master-section h4 { margin: 0 0 12px; font-size: 14px; }
+    .vendor-block { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+    .vendor-block .vendor-name-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+    .vendor-block .vendor-name-row input { flex: 1; }
+    .vendor-block .item-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+    .vendor-block .item-row input:nth-child(1) { flex: 1; min-width: 0; }
+    .vendor-block .item-row input:nth-child(2) { width: 70px; }
+    .btn-small { padding: 6px 10px; font-size: 12px; border-radius: 6px; border: 1px solid var(--border); background: #fff; cursor: pointer; }
+    .btn-small.danger { border-color: #dc2626; color: #dc2626; }
+    .btn-add-vendor { margin-top: 8px; width: 100%; padding: 10px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <input type="date" id="dateInput" style="font-weight:bold; border:none; padding:0; width:auto;">
+    <span id="syncStatus" class="status-badge status-ready">READY</span>
+  </div>
+  <div class="header-right">
+    <div class="vendor-select-wrap">
+      <label style="font-size:10px; display:block">業者</label>
+      <select id="vendorSelectTop"></select>
+    </div>
+    <div>
+      <label style="font-size:10px; display:block">担当者</label>
+      <select id="userSelect" style="width:120px; padding:4px; font-size:12px;"></select>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section id="view-main" class="view main-layout">
+    <div class="sidebar" id="vendorList"></div>
+    <div class="content">
+      <h2 id="currentVendorName" style="margin-top:0">業者を選択</h2>
+      <div id="itemList" class="item-grid"></div>
+    </div>
+  </section>
+
+  <section id="view-settings" class="view" style="display:none; padding:20px;">
+    <div style="max-width:500px; margin:0 auto; background:#fff; padding:20px; border-radius:12px;">
+      <h3>システム設定</h3>
+      <div class="input-group">
+        <label>GAS WebアプリURL</label>
+        <input type="text" id="gasUrl" placeholder="https://script.google.com/...">
+        <div id="gasUrlError" class="error-msg"></div>
+      </div>
+      <div class="input-group">
+        <label>スタッフ名（カンマ区切り）</label>
+        <input type="text" id="staffList" placeholder="田中, 佐藤, 鈴木">
+        <div id="staffListError" class="error-msg"></div>
+      </div>
+      <div class="master-section">
+        <h4>業者・品目マスタ</h4>
+        <p style="font-size:12px; color:var(--muted); margin:0 0 10px;">業者を追加し、各業者の品目（名前と単位）を登録できます。</p>
+        <div id="masterEditorWrap"></div>
+        <button type="button" class="btn-add-vendor" id="btnAddVendor">＋ 業者を追加</button>
+      </div>
+      <button type="button" id="btnSaveSettings" style="width:100%; background:var(--primary); color:#fff; padding:12px; border:none; border-radius:6px; font-weight:bold; margin-top:16px;">保存して適用</button>
+    </div>
+  </section>
+
+  <section id="view-list" class="view" style="display:none; padding:20px;">
+    <div id="summaryContent" style="max-width:600px; margin:0 auto;"></div>
+  </section>
+</main>
+
+<nav>
+  <div class="nav-btn active" onclick="switchTab('main', this)">🛒 発注</div>
+  <div class="nav-btn" onclick="switchTab('list', this)">📋 確認</div>
+  <div class="nav-btn" onclick="switchTab('settings', this)">⚙️ 設定</div>
+</nav>
+
+<script>
+(function() {
+  const STORE_ID = 'default';
+  const DEBOUNCE_MS = 2000;
+
+  const DEFAULT_MASTER = {
+    vendors: [
+      { name: '大光', items: [{ name: 'バター', unit: 'kg' }, { name: '牛乳', unit: '本' }] },
+      { name: '高瀬', items: [{ name: 'キャベツ', unit: '玉' }, { name: 'レタス', unit: '玉' }] },
+      { name: '安田青果', items: [{ name: '玉ねぎ', unit: 'kg' }] }
+    ]
+  };
+
+  let orders = {};
+  let ordersIndex = {};
+  let currentVendor = '';
+  let pullAbortController = null;
+  let master = JSON.parse(JSON.stringify(DEFAULT_MASTER));
+
+  function loadMaster() {
+    const raw = localStorage.getItem('orderMaster_v5');
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.vendors) && parsed.vendors.length) master = parsed;
+      } catch (_) {}
+    }
+  }
+  function persistMaster() {
+    localStorage.setItem('orderMaster_v5', JSON.stringify(master));
+  }
+
+  function migrateV4ToV5() {
+    const rawOrders = localStorage.getItem('orders_v4');
+    const rawConfig = localStorage.getItem('orderConfig_v4');
+    if (!rawOrders && !rawConfig) return;
+    if (localStorage.getItem('orders_v5') !== null) return;
+
+    if (rawOrders) {
+      const v4 = JSON.parse(rawOrders);
+      const now = Date.now();
+      const v5 = {};
+      for (const date of Object.keys(v4)) {
+        v5[date] = {};
+        for (const vendor of Object.keys(v4[date] || {})) {
+          v5[date][vendor] = {};
+          for (const item of Object.keys(v4[date][vendor] || {})) {
+            const o = v4[date][vendor][item];
+            v5[date][vendor][item] = {
+              qty: typeof o === 'object' && o !== null && 'qty' in o ? o.qty : (Number(o) || 0),
+              updatedAt: (o && o.updatedAt) || now,
+              updatedBy: (o && o.updatedBy) || ''
+            };
+          }
+        }
+      }
+      orders = v5;
+      ordersIndex = {};
+      for (const date of Object.keys(orders)) {
+        let maxAt = 0;
+        for (const v of Object.values(orders[date] || {})) {
+          for (const i of Object.values(v || {})) {
+            if (i && i.updatedAt) maxAt = Math.max(maxAt, i.updatedAt);
+          }
+        }
+        ordersIndex[date] = { version: 0, updatedAt: maxAt || now };
+      }
+      persistOrders();
+    }
+    if (rawConfig) {
+      const c = JSON.parse(rawConfig);
+      config = { gasUrl: c.gasUrl || '', staff: c.staff || '担当者未設定', storeId: STORE_ID };
+      localStorage.setItem('orderConfig_v5', JSON.stringify(config));
+    }
+  }
+
+  let config = JSON.parse(localStorage.getItem('orderConfig_v5') || '{"gasUrl":"","staff":"担当者未設定","storeId":"default"}');
+  if (!config.storeId) config.storeId = STORE_ID;
+
+  function loadFromStorage() {
+    const o = localStorage.getItem('orders_v5');
+    const i = localStorage.getItem('ordersIndex_v5');
+    if (o) orders = JSON.parse(o);
+    if (i) ordersIndex = JSON.parse(i);
+  }
+
+  function persistOrders() {
+    localStorage.setItem('orders_v5', JSON.stringify(orders));
+    localStorage.setItem('ordersIndex_v5', JSON.stringify(ordersIndex));
+  }
+
+  function setSyncStatus(type, text) {
+    const el = document.getElementById('syncStatus');
+    el.innerText = text;
+    el.className = 'status-badge status-' + type;
+  }
+
+  function getCurrentDate() { return document.getElementById('dateInput').value; }
+  function getCurrentUser() { return document.getElementById('userSelect').value || ''; }
+
+  async function flushPendingSyncForDate(date) {
+    if (!config.gasUrl || !orders[date]) return;
+    if (window.syncTimer) {
+      clearTimeout(window.syncTimer);
+      window.syncTimer = null;
+    }
+    setSyncStatus('syncing', '送信中...');
+    try {
+      const res = await fetch(config.gasUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: date,
+          storeId: config.storeId || STORE_ID,
+          data: JSON.stringify(orders[date]),
+          user: getCurrentUser()
+        })
+      });
+      const result = await res.json();
+      if (result.status === 'success' && result.updatedAt != null) {
+        ordersIndex[date] = { version: result.version || 0, updatedAt: result.updatedAt };
+        persistOrders();
+      }
+    } catch (_) {}
+  }
+
+  async function pullFromCloud(date) {
+    if (!config.gasUrl) return;
+    if (pullAbortController) pullAbortController.abort();
+    pullAbortController = new AbortController();
+    const signal = pullAbortController.signal;
+    setSyncStatus('syncing', '取得中...');
+    try {
+      const url = config.gasUrl + '?date=' + encodeURIComponent(date) + '&storeId=' + encodeURIComponent(config.storeId || STORE_ID);
+      const res = await fetch(url, { signal });
+      const result = await res.json();
+      if (signal.aborted) return;
+
+      const cloudData = result.data;
+      const cloudUpdatedAt = Number(result.updatedAt) || 0;
+      const cloudVersion = Number(result.version) || 0;
+      const isEmpty = !cloudData || String(cloudData).trim() === '' || String(cloudData).trim() === '{}';
+
+      if (isEmpty) {
+        if (!orders[date]) orders[date] = {};
+        setSyncStatus('saved', 'READY');
+        renderItems();
+        return;
+      }
+
+      const localMeta = ordersIndex[date] || { version: 0, updatedAt: 0 };
+      const localNewer = (localMeta.updatedAt > cloudUpdatedAt) || (localMeta.version > cloudVersion);
+      if (localNewer) {
+        setSyncStatus('conflict', 'ローカル優先');
+        renderItems();
+        return;
+      }
+
+      let parsed;
+      try {
+        parsed = typeof cloudData === 'string' ? JSON.parse(cloudData) : cloudData;
+      } catch (_) {
+        setSyncStatus('saved', 'READY');
+        return;
+      }
+      orders[date] = normalizeDayData(parsed);
+      ordersIndex[date] = { version: cloudVersion, updatedAt: cloudUpdatedAt };
+      persistOrders();
+      setSyncStatus('saved', 'READY');
+      renderItems();
+    } catch (e) {
+      if (e.name === 'AbortError') return;
+      setSyncStatus('offline', 'オフライン');
+    }
+  }
+
+  function normalizeDayData(obj) {
+    if (!obj || typeof obj !== 'object') return {};
+    const out = {};
+    for (const vendor of Object.keys(obj)) {
+      out[vendor] = {};
+      const v = obj[vendor];
+      if (!v || typeof v !== 'object') continue;
+      for (const item of Object.keys(v)) {
+        const x = v[item];
+        const qty = typeof x === 'object' && x !== null && 'qty' in x ? Number(x.qty) || 0 : (Number(x) || 0);
+        out[vendor][item] = { qty, updatedAt: (x && x.updatedAt) || Date.now(), updatedBy: (x && x.updatedBy) || '' };
+      }
+    }
+    return out;
+  }
+
+  async function syncToCloud() {
+    const date = getCurrentDate();
+    if (!config.gasUrl || !orders[date]) return;
+    if (window.syncTimer) {
+      clearTimeout(window.syncTimer);
+      window.syncTimer = null;
+    }
+    setSyncStatus('syncing', '保存中...');
+    try {
+      const res = await fetch(config.gasUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: date,
+          storeId: config.storeId || STORE_ID,
+          data: JSON.stringify(orders[date]),
+          user: getCurrentUser()
+        })
+      });
+      const result = await res.json();
+      if (result.status === 'success' && result.updatedAt != null) {
+        ordersIndex[date] = { version: result.version || 0, updatedAt: result.updatedAt };
+        persistOrders();
+        setSyncStatus('saved', '保存完了');
+      } else if (result.status === 'skipped') {
+        setSyncStatus('saved', 'READY');
+      } else {
+        setSyncStatus('offline', '保存失敗');
+      }
+    } catch (_) {
+      setSyncStatus('offline', 'オフライン');
+    }
+  }
+
+  async function handleDateChange() {
+    const newDate = getCurrentDate();
+    const oldDate = window._lastDate;
+    window._lastDate = newDate;
+
+    if (oldDate && oldDate !== newDate) {
+      setSyncStatus('syncing', '日付変更中...');
+      await flushPendingSyncForDate(oldDate);
+    }
+    await pullFromCloud(newDate);
+    renderVendors();
+    renderItems();
+    syncVendorSelectTop();
+  }
+
+  function renderVendors() {
+    const container = document.getElementById('vendorList');
+    container.innerHTML = master.vendors.map(function(v) {
+      return '<div class="vendor-item ' + (v.name === currentVendor ? 'active' : '') + '" onclick="window.selectVendor(\'' + v.name.replace(/'/g, "\\'") + '\')">' + v.name + '</div>';
+    }).join('');
+    const top = document.getElementById('vendorSelectTop');
+    if (top) {
+      top.innerHTML = master.vendors.map(function(v) {
+        return '<option value="' + v.name + '"' + (v.name === currentVendor ? ' selected' : '') + '>' + v.name + '</option>';
+      }).join('');
+    }
+  }
+
+  function syncVendorSelectTop() {
+    const top = document.getElementById('vendorSelectTop');
+    if (top && top.value !== currentVendor) top.value = currentVendor;
+  }
+
+  window.selectVendor = function(name) {
+    currentVendor = name;
+    document.getElementById('currentVendorName').innerText = name;
+    renderVendors();
+    renderItems();
+    syncVendorSelectTop();
+  };
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const top = document.getElementById('vendorSelectTop');
+    if (top) top.addEventListener('change', function() { window.selectVendor(top.value); });
+  });
+
+  function renderItems() {
+    const date = getCurrentDate();
+    const vendor = master.vendors.find(function(v) { return v.name === currentVendor; });
+    const container = document.getElementById('itemList');
+    if (!vendor) {
+      container.innerHTML = '<p>業者を選択してください</p>';
+      return;
+    }
+    container.innerHTML = vendor.items.map(function(item) {
+      const o = orders[date] && orders[date][currentVendor] && orders[date][currentVendor][item.name];
+      const qty = o ? (o.qty || 0) : 0;
+      const safeName = item.name.replace(/'/g, "\\'");
+      return '<div class="item-card' + (qty > 0 ? ' has-qty' : '') + '">' +
+        '<div><div style="font-weight:bold; font-size:1.1em;">' + item.name + '</div><div style="color:var(--muted); font-size:12px;">単位: ' + item.unit + '</div></div>' +
+        '<div class="qty-ctrl">' +
+        '<button type="button" class="btn-qty" data-delta="-1" data-item="' + safeName + '">−</button>' +
+        '<div class="qty-num">' + qty + '</div>' +
+        '<button type="button" class="btn-qty" data-delta="1" data-item="' + safeName + '">+</button>' +
+        '</div></div>';
+    }).join('');
+
+    container.querySelectorAll('.btn-qty').forEach(function(btn) {
+      const delta = parseInt(btn.getAttribute('data-delta'), 10);
+      const itemName = btn.getAttribute('data-item').replace(/\\'/g, "'");
+      btn.addEventListener('click', function() { window.changeQty(itemName, delta); });
+    });
+  }
+
+  window.changeQty = function(itemName, delta) {
+    const date = getCurrentDate();
+    const user = getCurrentUser();
+    const now = Date.now();
+    if (!orders[date]) orders[date] = {};
+    if (!orders[date][currentVendor]) orders[date][currentVendor] = {};
+    if (!orders[date][currentVendor][itemName]) {
+      orders[date][currentVendor][itemName] = { qty: 0, updatedAt: now, updatedBy: user };
+    }
+    const entry = orders[date][currentVendor][itemName];
+    entry.qty = Math.max(0, (entry.qty || 0) + delta);
+    entry.updatedAt = now;
+    entry.updatedBy = user;
+    if (!ordersIndex[date]) ordersIndex[date] = { version: 0, updatedAt: 0 };
+    ordersIndex[date].updatedAt = now;
+    persistOrders();
+    renderItems();
+
+    clearTimeout(window.syncTimer);
+    window.syncTimer = setTimeout(syncToCloud, DEBOUNCE_MS);
+  };
+
+  function updateUserSelect() {
+    const list = (config.staff || '').split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+    const select = document.getElementById('userSelect');
+    if (!list.length) list.push('担当者未設定');
+    select.innerHTML = list.map(function(s) { return '<option value="' + s + '">' + s + '</option>'; }).join('');
+  }
+
+  function saveSettings() {
+    const gasUrl = document.getElementById('gasUrl').value.trim();
+    const staff = document.getElementById('staffList').value.trim();
+    let ok = true;
+    document.getElementById('gasUrlError').textContent = '';
+    document.getElementById('staffListError').textContent = '';
+    document.getElementById('gasUrl').classList.remove('input-error');
+    document.getElementById('staffList').classList.remove('input-error');
+    if (!gasUrl) {
+      document.getElementById('gasUrlError').textContent = 'URLを入力してください';
+      document.getElementById('gasUrl').classList.add('input-error');
+      ok = false;
+    }
+    if (!staff) {
+      document.getElementById('staffListError').textContent = 'スタッフ名を入力してください';
+      document.getElementById('staffList').classList.add('input-error');
+      ok = false;
+    }
+    if (!ok) return;
+    config.gasUrl = gasUrl;
+    config.staff = staff;
+    config.storeId = STORE_ID;
+    localStorage.setItem('orderConfig_v5', JSON.stringify(config));
+    master = readMasterFromForm();
+    persistMaster();
+    if (!master.vendors.find(function(v) { return v.name === currentVendor; })) {
+      currentVendor = master.vendors.length ? master.vendors[0].name : '';
+    }
+    updateUserSelect();
+    setSyncStatus('saved', '保存完了');
+    alert('設定を保存しました');
+  }
+
+  function switchTab(tabId, el) {
+    document.querySelectorAll('.view').forEach(function(v) { v.style.display = 'none'; });
+    var view = document.getElementById('view-' + tabId);
+    if (!view) return;
+    view.style.display = tabId === 'main' ? 'grid' : 'block';
+    document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('active'); });
+    if (el) el.classList.add('active');
+    if (tabId === 'list') renderSummary();
+    if (tabId === 'settings') renderMasterEditor();
+    if (tabId === 'main') {
+      if (!master.vendors.find(function(v) { return v.name === currentVendor; })) {
+        currentVendor = master.vendors.length ? master.vendors[0].name : '';
+      }
+      renderVendors();
+      renderItems();
+      syncVendorSelectTop();
+    }
+  }
+  window.switchTab = switchTab;
+
+  function renderMasterEditor() {
+    var wrap = document.getElementById('masterEditorWrap');
+    if (!wrap) return;
+    if (!master.vendors || !Array.isArray(master.vendors)) master.vendors = JSON.parse(JSON.stringify(DEFAULT_MASTER.vendors));
+    var html = '';
+    master.vendors.forEach(function(v, vi) {
+      if (!v) return;
+      html += '<div class="vendor-block" data-vendor-index="' + vi + '">';
+      html += '<div class="vendor-name-row"><label style="flex:0 0 70px;">業者名</label><input type="text" class="vendor-name" value="' + (v.name || '').replace(/"/g, '&quot;') + '" placeholder="業者名"></div>';
+      html += '<div class="vendor-items" data-vendor-index="' + vi + '">';
+      (v.items || []).forEach(function(it, ii) {
+        html += '<div class="item-row" data-item-index="' + ii + '">';
+        html += '<input type="text" class="item-name" placeholder="品目名" value="' + (it.name || '').replace(/"/g, '&quot;') + '">';
+        html += '<input type="text" class="item-unit" placeholder="単位" value="' + (it.unit || '').replace(/"/g, '&quot;') + '">';
+        html += '<button type="button" class="btn-small danger btn-remove-item" data-vi="' + vi + '" data-ii="' + ii + '">削除</button>';
+        html += '</div>';
+      });
+      html += '</div>';
+      html += '<div style="display:flex; gap:8px; margin-top:8px;">';
+      html += '<button type="button" class="btn-small btn-add-item" data-vendor-index="' + vi + '">＋ 品目を追加</button>';
+      html += '<button type="button" class="btn-small danger btn-remove-vendor" data-vendor-index="' + vi + '">業者を削除</button>';
+      html += '</div></div>';
+    });
+    wrap.innerHTML = html;
+
+    wrap.querySelectorAll('.btn-add-item').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var vi = parseInt(btn.getAttribute('data-vendor-index'), 10);
+        if (!master.vendors[vi]) return;
+        master.vendors[vi].items = master.vendors[vi].items || [];
+        master.vendors[vi].items.push({ name: '', unit: '' });
+        renderMasterEditor();
+      });
+    });
+    wrap.querySelectorAll('.btn-remove-item').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var vi = parseInt(btn.getAttribute('data-vi'), 10);
+        var ii = parseInt(btn.getAttribute('data-ii'), 10);
+        if (master.vendors[vi] && master.vendors[vi].items) {
+          master.vendors[vi].items.splice(ii, 1);
+          renderMasterEditor();
+        }
+      });
+    });
+    wrap.querySelectorAll('.btn-remove-vendor').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var vi = parseInt(btn.getAttribute('data-vendor-index'), 10);
+        master.vendors.splice(vi, 1);
+        renderMasterEditor();
+      });
+    });
+  }
+
+  function readMasterFromForm() {
+    var wrap = document.getElementById('masterEditorWrap');
+    if (!wrap) return master;
+    var vendors = [];
+    wrap.querySelectorAll('.vendor-block').forEach(function(block) {
+      var nameInput = block.querySelector('.vendor-name');
+      var name = (nameInput && nameInput.value || '').trim();
+      var items = [];
+      block.querySelectorAll('.item-row').forEach(function(row) {
+        var nameInp = row.querySelector('.item-name');
+        var unitInp = row.querySelector('.item-unit');
+        var iname = (nameInp && nameInp.value || '').trim();
+        var u = (unitInp && unitInp.value || '').trim();
+        if (iname || u) items.push({ name: iname || '品目', unit: u || '個' });
+      });
+      vendors.push({ name: name || '未設定業者', items: items.length ? items : [{ name: '品目1', unit: '個' }] });
+    });
+    return { vendors: vendors.length ? vendors : JSON.parse(JSON.stringify(DEFAULT_MASTER.vendors)) };
+  }
+
+  function renderSummary() {
+    const date = getCurrentDate();
+    const dayData = orders[date] || {};
+    let html = '<h2 style="margin-top:0">' + date + ' の発注内容</h2>';
+    let hasData = false;
+    master.vendors.forEach(function(v) {
+      const items = dayData[v.name];
+      if (!items) return;
+      const entries = Object.entries(items).filter(function(kv) { return (kv[1].qty || 0) > 0; });
+      if (entries.length === 0) return;
+      hasData = true;
+      const text = v.name + '\n' + entries.map(function(kv) { return kv[0] + ': ' + kv[1].qty; }).join('\n');
+      const copyAttr = text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/\n/g, '&#10;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      html += '<div class="summary-block">';
+      html += '<h3>' + v.name + '</h3>';
+      html += '<ul>';
+      entries.forEach(function(kv) {
+        html += '<li><span>' + kv[0] + '</span><b>' + kv[1].qty + '</b></li>';
+      });
+      html += '</ul>';
+      html += '<button type="button" class="copy-btn" data-copy="' + copyAttr + '">コピー</button>';
+      html += '</div>';
+    });
+    document.getElementById('summaryContent').innerHTML = hasData ? html : '<p>発注データがありません。</p>';
+    document.getElementById('summaryContent').querySelectorAll('.copy-btn').forEach(function(btn) {
+      const raw = btn.getAttribute('data-copy');
+      if (!raw) return;
+      const text = raw.replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#10;/g, '\n').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+      btn.addEventListener('click', function() {
+        navigator.clipboard.writeText(text).then(function() { btn.textContent = 'コピーしました'; setTimeout(function() { btn.textContent = 'コピー'; }, 1500); });
+      });
+    });
+  }
+
+  window.onload = async function() {
+    migrateV4ToV5();
+    loadFromStorage();
+    loadMaster();
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('dateInput').value = today;
+    document.getElementById('gasUrl').value = config.gasUrl || '';
+    document.getElementById('staffList').value = config.staff || '';
+    updateUserSelect();
+    window._lastDate = today;
+    document.getElementById('dateInput').addEventListener('change', handleDateChange);
+
+    if (config.gasUrl) {
+      setSyncStatus('syncing', '読込中...');
+      await pullFromCloud(today);
+    } else {
+      setSyncStatus('ready', 'READY');
+    }
+    if (!currentVendor && master.vendors.length) currentVendor = master.vendors[0].name;
+    renderVendors();
+    renderItems();
+    syncVendorSelectTop();
+
+    var btnAdd = document.getElementById('btnAddVendor');
+    if (btnAdd) btnAdd.addEventListener('click', function() {
+      master.vendors.push({ name: '', items: [{ name: '', unit: '' }] });
+      renderMasterEditor();
+    });
+    var btnSave = document.getElementById('btnSaveSettings');
+    if (btnSave) btnSave.addEventListener('click', saveSettings);
+  };
+})();
+</script>
+</body>
+</html>
+
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body {
       margin: 0; font-family: 'Segoe UI', Meiryo, sans-serif;
