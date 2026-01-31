@@ -620,9 +620,9 @@
         var u = (unitInp && unitInp.value || '').trim();
         if (iname || u) items.push({ name: iname || '品目', unit: u || '個' });
       });
-      if (name || items.length) vendors.push({ name: name || '未設定業者', items: items.length ? items : [{ name: '品目1', unit: '個' }] });
+      vendors.push({ name: name || '未設定業者', items: items.length ? items : [{ name: '品目1', unit: '個' }] });
     });
-    return { vendors: vendors.length ? vendors : DEFAULT_MASTER.vendors };
+    return { vendors: vendors.length ? vendors : JSON.parse(JSON.stringify(DEFAULT_MASTER.vendors)) };
   }
 
   function renderSummary() {
