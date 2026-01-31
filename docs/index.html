@@ -535,9 +535,10 @@
   function switchTab(tabId, el) {
     document.querySelectorAll('.view').forEach(function(v) { v.style.display = 'none'; });
     var view = document.getElementById('view-' + tabId);
+    if (!view) return;
     view.style.display = tabId === 'main' ? 'grid' : 'block';
     document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('active'); });
-    el.classList.add('active');
+    if (el) el.classList.add('active');
     if (tabId === 'list') renderSummary();
     if (tabId === 'settings') renderMasterEditor();
     if (tabId === 'main') {
@@ -549,12 +550,15 @@
       syncVendorSelectTop();
     }
   }
+  window.switchTab = switchTab;
 
   function renderMasterEditor() {
     var wrap = document.getElementById('masterEditorWrap');
     if (!wrap) return;
+    if (!master.vendors || !Array.isArray(master.vendors)) master.vendors = JSON.parse(JSON.stringify(DEFAULT_MASTER.vendors));
     var html = '';
     master.vendors.forEach(function(v, vi) {
+      if (!v) return;
       html += '<div class="vendor-block" data-vendor-index="' + vi + '">';
       html += '<div class="vendor-name-row"><label style="flex:0 0 70px;">業者名</label><input type="text" class="vendor-name" value="' + (v.name || '').replace(/"/g, '&quot;') + '" placeholder="業者名"></div>';
       html += '<div class="vendor-items" data-vendor-index="' + vi + '">';
