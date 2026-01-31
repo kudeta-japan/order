@@ -57,6 +57,7 @@
     }
     .item-card.has-qty { border-color: var(--accent); background: #f0fdf4; }
     .item-card .stock-qty-row { display: flex; gap: 12px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+    .item-card .qty-ctrl { flex-wrap: nowrap; white-space: nowrap; }
     .item-card .stock-input { width: 70px; padding: 6px 8px; font-size: 14px; }
     .item-card .unit-price { font-size: 12px; color: var(--muted); }
     .item-card .amount { font-weight: bold; color: var(--primary); }
@@ -496,9 +497,11 @@
         '<div class="stock-qty-row">' +
         '<label style="font-size:11px;">在庫</label><input type="number" min="0" class="stock-input" data-item="' + safeName + '" value="' + stock + '" placeholder="0">' +
         '<span style="font-size:12px;">発注数</span>' +
+        '<div class="qty-ctrl">' +
         '<button type="button" class="btn-qty" data-delta="-1" data-item="' + safeName + '">−</button>' +
         '<div class="qty-num">' + qty + '</div>' +
         '<button type="button" class="btn-qty" data-delta="1" data-item="' + safeName + '">+</button>' +
+        '</div>' +
         (amount > 0 ? '<span class="amount">' + amount + '円</span>' : '') +
         '</div></div></div>';
     }).join('');
