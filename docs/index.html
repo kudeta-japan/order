@@ -94,6 +94,18 @@
     .summary-block li:last-child { border-bottom: none; }
     .copy-btn { margin-top: 10px; padding: 10px 16px; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; }
     .copy-btn:active { opacity: 0.9; }
+
+    .master-section { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
+    .master-section h4 { margin: 0 0 12px; font-size: 14px; }
+    .vendor-block { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+    .vendor-block .vendor-name-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+    .vendor-block .vendor-name-row input { flex: 1; }
+    .vendor-block .item-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+    .vendor-block .item-row input:nth-child(1) { flex: 1; min-width: 0; }
+    .vendor-block .item-row input:nth-child(2) { width: 70px; }
+    .btn-small { padding: 6px 10px; font-size: 12px; border-radius: 6px; border: 1px solid var(--border); background: #fff; cursor: pointer; }
+    .btn-small.danger { border-color: #dc2626; color: #dc2626; }
+    .btn-add-vendor { margin-top: 8px; width: 100%; padding: 10px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -137,7 +149,13 @@
         <input type="text" id="staffList" placeholder="田中, 佐藤, 鈴木">
         <div id="staffListError" class="error-msg"></div>
       </div>
-      <button onclick="saveSettings()" style="width:100%; background:var(--primary); color:#fff; padding:12px; border:none; border-radius:6px; font-weight:bold;">保存して適用</button>
+      <div class="master-section">
+        <h4>業者・品目マスタ</h4>
+        <p style="font-size:12px; color:var(--muted); margin:0 0 10px;">業者を追加し、各業者の品目（名前と単位）を登録できます。</p>
+        <div id="masterEditorWrap"></div>
+        <button type="button" class="btn-add-vendor" id="btnAddVendor">＋ 業者を追加</button>
+      </div>
+      <button onclick="saveSettings()" style="width:100%; background:var(--primary); color:#fff; padding:12px; border:none; border-radius:6px; font-weight:bold; margin-top:16px;">保存して適用</button>
     </div>
   </section>
 
@@ -157,17 +175,32 @@
   const STORE_ID = 'default';
   const DEBOUNCE_MS = 2000;
 
-  let orders = {};
-  let ordersIndex = {};
-  let currentVendor = '';
-  let pullAbortController = null;
-  let master = {
+  const DEFAULT_MASTER = {
     vendors: [
       { name: '大光', items: [{ name: 'バター', unit: 'kg' }, { name: '牛乳', unit: '本' }] },
       { name: '高瀬', items: [{ name: 'キャベツ', unit: '玉' }, { name: 'レタス', unit: '玉' }] },
       { name: '安田青果', items: [{ name: '玉ねぎ', unit: 'kg' }] }
     ]
   };
+
+  let orders = {};
+  let ordersIndex = {};
+  let currentVendor = '';
+  let pullAbortController = null;
+  let master = JSON.parse(JSON.stringify(DEFAULT_MASTER));
+
+  function loadMaster() {
+    const raw = localStorage.getItem('orderMaster_v5');
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.vendors) && parsed.vendors.length) master = parsed;
+      } catch (_) {}
+    }
+  }
+  function persistMaster() {
+    localStorage.setItem('orderMaster_v5', JSON.stringify(master));
+  }
 
   function migrateV4ToV5() {
     const rawOrders = localStorage.getItem('orders_v4');
@@ -489,6 +522,11 @@
     config.staff = staff;
     config.storeId = STORE_ID;
     localStorage.setItem('orderConfig_v5', JSON.stringify(config));
+    master = readMasterFromForm();
+    persistMaster();
+    if (!master.vendors.find(function(v) { return v.name === currentVendor; })) {
+      currentVendor = master.vendors.length ? master.vendors[0].name : '';
+    }
     updateUserSelect();
     setSyncStatus('saved', '保存完了');
     alert('設定を保存しました');
@@ -501,6 +539,86 @@
     document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('active'); });
     el.classList.add('active');
     if (tabId === 'list') renderSummary();
+    if (tabId === 'settings') renderMasterEditor();
+    if (tabId === 'main') {
+      if (!master.vendors.find(function(v) { return v.name === currentVendor; })) {
+        currentVendor = master.vendors.length ? master.vendors[0].name : '';
+      }
+      renderVendors();
+      renderItems();
+      syncVendorSelectTop();
+    }
+  }
+
+  function renderMasterEditor() {
+    var wrap = document.getElementById('masterEditorWrap');
+    if (!wrap) return;
+    var html = '';
+    master.vendors.forEach(function(v, vi) {
+      html += '<div class="vendor-block" data-vendor-index="' + vi + '">';
+      html += '<div class="vendor-name-row"><label style="flex:0 0 70px;">業者名</label><input type="text" class="vendor-name" value="' + (v.name || '').replace(/"/g, '&quot;') + '" placeholder="業者名"></div>';
+      html += '<div class="vendor-items" data-vendor-index="' + vi + '">';
+      (v.items || []).forEach(function(it, ii) {
+        html += '<div class="item-row" data-item-index="' + ii + '">';
+        html += '<input type="text" class="item-name" placeholder="品目名" value="' + (it.name || '').replace(/"/g, '&quot;') + '">';
+        html += '<input type="text" class="item-unit" placeholder="単位" value="' + (it.unit || '').replace(/"/g, '&quot;') + '">';
+        html += '<button type="button" class="btn-small danger btn-remove-item" data-vi="' + vi + '" data-ii="' + ii + '">削除</button>';
+        html += '</div>';
+      });
+      html += '</div>';
+      html += '<div style="display:flex; gap:8px; margin-top:8px;">';
+      html += '<button type="button" class="btn-small btn-add-item" data-vendor-index="' + vi + '">＋ 品目を追加</button>';
+      html += '<button type="button" class="btn-small danger btn-remove-vendor" data-vendor-index="' + vi + '">業者を削除</button>';
+      html += '</div></div>';
+    });
+    wrap.innerHTML = html;
+
+    wrap.querySelectorAll('.btn-add-item').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var vi = parseInt(btn.getAttribute('data-vendor-index'), 10);
+        if (!master.vendors[vi]) return;
+        master.vendors[vi].items = master.vendors[vi].items || [];
+        master.vendors[vi].items.push({ name: '', unit: '' });
+        renderMasterEditor();
+      });
+    });
+    wrap.querySelectorAll('.btn-remove-item').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var vi = parseInt(btn.getAttribute('data-vi'), 10);
+        var ii = parseInt(btn.getAttribute('data-ii'), 10);
+        if (master.vendors[vi] && master.vendors[vi].items) {
+          master.vendors[vi].items.splice(ii, 1);
+          renderMasterEditor();
+        }
+      });
+    });
+    wrap.querySelectorAll('.btn-remove-vendor').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var vi = parseInt(btn.getAttribute('data-vendor-index'), 10);
+        master.vendors.splice(vi, 1);
+        renderMasterEditor();
+      });
+    });
+  }
+
+  function readMasterFromForm() {
+    var wrap = document.getElementById('masterEditorWrap');
+    if (!wrap) return master;
+    var vendors = [];
+    wrap.querySelectorAll('.vendor-block').forEach(function(block) {
+      var nameInput = block.querySelector('.vendor-name');
+      var name = (nameInput && nameInput.value || '').trim();
+      var items = [];
+      block.querySelectorAll('.item-row').forEach(function(row) {
+        var nameInp = row.querySelector('.item-name');
+        var unitInp = row.querySelector('.item-unit');
+        var iname = (nameInp && nameInp.value || '').trim();
+        var u = (unitInp && unitInp.value || '').trim();
+        if (iname || u) items.push({ name: iname || '品目', unit: u || '個' });
+      });
+      if (name || items.length) vendors.push({ name: name || '未設定業者', items: items.length ? items : [{ name: '品目1', unit: '個' }] });
+    });
+    return { vendors: vendors.length ? vendors : DEFAULT_MASTER.vendors };
   }
 
   function renderSummary() {
@@ -540,6 +658,7 @@
   window.onload = async function() {
     migrateV4ToV5();
     loadFromStorage();
+    loadMaster();
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('dateInput').value = today;
     document.getElementById('gasUrl').value = config.gasUrl || '';
@@ -558,6 +677,12 @@
     renderVendors();
     renderItems();
     syncVendorSelectTop();
+
+    var btnAdd = document.getElementById('btnAddVendor');
+    if (btnAdd) btnAdd.addEventListener('click', function() {
+      master.vendors.push({ name: '', items: [{ name: '', unit: '' }] });
+      renderMasterEditor();
+    });
   };
 })();
 </script>
