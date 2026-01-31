@@ -167,6 +167,11 @@
       <div class="master-section">
         <h4>業者・品目マスタ</h4>
         <p style="font-size:12px; color:var(--muted); margin:0 0 10px;">業者を追加し、各業者の品目（名前と単位）を登録できます。</p>
+        <div class="input-group" style="margin-bottom:12px;">
+          <label>JSONからマスタを読み込み（master_seed.json など）</label>
+          <input type="file" id="masterSeedFile" accept=".json,application/json" style="font-size:12px;">
+          <button type="button" class="btn-small" id="btnApplySeed" style="margin-top:6px;">読み込んで反映</button>
+        </div>
         <div id="masterEditorWrap"></div>
         <button type="button" class="btn-add-vendor" id="btnAddVendor">＋ 業者を追加</button>
       </div>
@@ -698,6 +703,21 @@
     });
   }
 
+  function applySeedFromJson(parsed) {
+    if (!parsed || !parsed.vendors || !Array.isArray(parsed.vendors)) return false;
+    master.vendors = parsed.vendors.map(function(v) {
+      var items = (v.items || []).map(function(it) {
+        return {
+          name: (it && it.name) ? String(it.name) : '品目',
+          unit: (it && it.unit) ? String(it.unit) : '個',
+          price: (it && (it.price !== undefined && it.price !== null)) ? Number(it.price) || 0 : 0
+        };
+      });
+      return { name: (v && v.name) ? String(v.name) : '未設定', items: items.length ? items : [{ name: '品目1', unit: '個', price: 0 }] };
+    });
+    return master.vendors.length > 0;
+  }
+
   function readMasterFromForm() {
     var wrap = document.getElementById('masterEditorWrap');
     if (!wrap) return master;
@@ -820,6 +840,37 @@
     });
     var btnSave = document.getElementById('btnSaveSettings');
     if (btnSave) btnSave.addEventListener('click', saveSettings);
+
+    var seedFile = document.getElementById('masterSeedFile');
+    var btnApplySeed = document.getElementById('btnApplySeed');
+    if (btnApplySeed && seedFile) {
+      btnApplySeed.addEventListener('click', function() {
+        var file = seedFile.files[0];
+        if (!file) {
+          alert('JSONファイルを選択してください。');
+          return;
+        }
+        var reader = new FileReader();
+        reader.onload = function() {
+          try {
+            var parsed = JSON.parse(reader.result);
+            if (applySeedFromJson(parsed)) {
+              persistMaster();
+              renderMasterEditor();
+              if (!master.vendors.find(function(v) { return v.name === currentVendor; })) {
+                currentVendor = master.vendors.length ? master.vendors[0].name : '';
+              }
+              alert('マスタを反映しました。業者 ' + master.vendors.length + ' 件。');
+            } else {
+              alert('JSONの形式が正しくありません。vendors の配列が必要です。');
+            }
+          } catch (e) {
+            alert('JSONの読み込みに失敗しました: ' + (e.message || e));
+          }
+        };
+        reader.readAsText(file, 'UTF-8');
+      });
+    }
 
     // 他iPadの更新を定期的に取得（リアルタイム確認用・約6秒ごと）
     if (POLL_INTERVAL_MS > 0) {
