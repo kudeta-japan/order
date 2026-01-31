@@ -155,7 +155,7 @@
         <div id="masterEditorWrap"></div>
         <button type="button" class="btn-add-vendor" id="btnAddVendor">＋ 業者を追加</button>
       </div>
-      <button onclick="saveSettings()" style="width:100%; background:var(--primary); color:#fff; padding:12px; border:none; border-radius:6px; font-weight:bold; margin-top:16px;">保存して適用</button>
+      <button type="button" id="btnSaveSettings" style="width:100%; background:var(--primary); color:#fff; padding:12px; border:none; border-radius:6px; font-weight:bold; margin-top:16px;">保存して適用</button>
     </div>
   </section>
 
@@ -531,7 +531,6 @@
     setSyncStatus('saved', '保存完了');
     alert('設定を保存しました');
   }
-  window.saveSettings = saveSettings;
 
   function switchTab(tabId, el) {
     document.querySelectorAll('.view').forEach(function(v) { v.style.display = 'none'; });
@@ -688,6 +687,8 @@
       master.vendors.push({ name: '', items: [{ name: '', unit: '' }] });
       renderMasterEditor();
     });
+    var btnSave = document.getElementById('btnSaveSettings');
+    if (btnSave) btnSave.addEventListener('click', saveSettings);
   };
 })();
 </script>
